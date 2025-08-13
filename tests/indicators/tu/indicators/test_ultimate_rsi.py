@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from app.indicators.incremental.ultimate_rsi import UltimateRsi
-from test.reader import load_test_data
+from tests.indicators.reader import load_test_data
 
 FILENAME = "history.csv"
 TOLERANCES = {

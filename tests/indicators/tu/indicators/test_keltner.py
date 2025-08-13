@@ -4,7 +4,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from app.indicators.incremental.keltner_channel import KeltnerChannel
-from test.reader import load_test_data
+from tests.indicators.reader import load_test_data
 
 FILENAME = "history.csv"
 TOLERANCES = {

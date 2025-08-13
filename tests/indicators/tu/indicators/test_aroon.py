@@ -1,9 +1,8 @@
 import pytest
 import pandas as pd
 import numpy as np
-import pandas_ta as ta
 from app.indicators.incremental.aroon import Aroon  # Adjust if needed
-from test.reader import load_test_data
+from tests.indicators.reader import load_test_data
 
 FILENAME = "history.csv"
 PERIOD = 14

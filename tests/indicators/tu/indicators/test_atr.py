@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from app.indicators.incremental.atr import ATR
 
-from test.reader import load_test_data
+from tests.indicators.reader import load_test_data
 
 FILENAME = "history.csv"
 PERIOD = 14

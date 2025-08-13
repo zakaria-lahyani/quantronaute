@@ -2,9 +2,8 @@ import pytest
 import pandas as pd
 import numpy as np
 from app.indicators.incremental.bollinger_bands import BollingerBands
-import pandas_ta as ta
 
-from test.reader import load_test_data
+from tests.indicators.reader import load_test_data
 
 FILENAME = "history.csv"
 PERIOD = 14

@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from app.indicators.incremental.rma import RMA
 
-from test.reader import load_test_data
+from tests.indicators.reader import load_test_data
 
 FILENAME = "history.csv"
 TOLERANCES = {

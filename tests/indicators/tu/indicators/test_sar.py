@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from app.indicators.incremental.sar import SAR
 import pandas as pd
-from test.reader import load_test_data
+from tests.indicators.reader import load_test_data
 
 FILENAME = "history.csv"
 TOLERANCES = {

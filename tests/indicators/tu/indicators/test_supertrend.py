@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from app.indicators.incremental.supertrend import Supertrend
-from test.reader import load_test_data
+from tests.indicators.reader import load_test_data
 
 FILENAME = "history.csv"
 TOLERANCES = {

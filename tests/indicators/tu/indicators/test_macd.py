@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from app.indicators.incremental.macd import MACD
-from test.reader import load_test_data
+from tests.indicators.reader import load_test_data
 
 FILENAME = "history.csv"
 TOLERANCES = {
