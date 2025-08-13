@@ -363,8 +363,15 @@ class TestRecentRowsProcessor:
         latest = processor.get_latest_row('1m')
         expected_latest = sample_rows_sequence[-1]
 
-        # Verify correct row returned
-        pd.testing.assert_series_equal(latest, expected_latest, check_names=False)
+        # Verify correct row returned (processor adds previous_* columns)
+        # Check that original columns match
+        for col in expected_latest.index:
+            assert latest[col] == expected_latest[col], f"Mismatch in column {col}"
+        
+        # Verify processor added previous_* columns
+        expected_previous_cols = [f'previous_{col}' for col in expected_latest.index]
+        for prev_col in expected_previous_cols:
+            assert prev_col in latest.index, f"Expected previous column {prev_col} not found"
 
         # Verify defensive copying
         latest['close'] = 999.0

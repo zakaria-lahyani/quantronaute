@@ -191,7 +191,7 @@ class TestIndicatorManager:
             df[col_name] = values
         return df
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_initialization_bulk_mode(self, mock_factory, sample_historical_data, sample_config, mock_handlers):
         """
         Test initialization with bulk computation mode.
@@ -232,7 +232,7 @@ class TestIndicatorManager:
         assert 'ema_12' in manager.historical_data.columns
         assert 'macd_default' in manager.historical_data.columns
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_initialization_warmup_mode(self, mock_factory, sample_historical_data, sample_config, mock_handlers):
         """
         Test initialization with warmup (row-by-row) computation mode.
@@ -267,7 +267,7 @@ class TestIndicatorManager:
         assert 'ema_12' in manager.historical_data.columns
         assert 'macd_default' in manager.historical_data.columns
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_bulk_compute_method(self, mock_factory, sample_historical_data, sample_config, mock_handlers):
         """
         Test bulk_compute method directly.
@@ -307,7 +307,7 @@ class TestIndicatorManager:
         for col in sample_historical_data.columns:
             pd.testing.assert_series_equal(result[col], sample_historical_data[col], check_names=False)
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_warmup_historical_method(self, mock_factory, sample_historical_data, sample_config, mock_handlers):
         """
         Test warmup_historical method directly.
@@ -344,7 +344,7 @@ class TestIndicatorManager:
         assert 'ema_12' in result.columns
         assert 'macd_default' in result.columns
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_get_historical_data(self, mock_factory, sample_historical_data, sample_config, mock_handlers):
         """
         Test get_historical_data method.
@@ -375,7 +375,7 @@ class TestIndicatorManager:
         assert 'ema_12' in result.columns
         assert 'macd_default' in result.columns
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_compute_indicators_single_row(self, mock_factory, sample_historical_data, sample_config, mock_handlers):
         """
         Test compute_indicators method for single row processing.
@@ -425,7 +425,7 @@ class TestIndicatorManager:
         assert result['ema_12'] == 103.2
         assert result['macd_default'] == 1.5
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_original_data_preservation(self, mock_factory, sample_historical_data, sample_config, mock_handlers):
         """
         Test that original historical data is preserved and not modified.
@@ -457,7 +457,7 @@ class TestIndicatorManager:
         # Verify original_historical is separate from historical_data
         assert not manager.original_historical.equals(manager.historical_data)
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_empty_config(self, mock_factory, sample_historical_data):
         """
         Test behavior with empty configuration.
@@ -483,7 +483,7 @@ class TestIndicatorManager:
         # Verify historical data equals original (no indicators added)
         pd.testing.assert_frame_equal(manager.historical_data, sample_historical_data)
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_single_indicator_config(self, mock_factory, sample_historical_data, mock_handlers):
         """
         Test with single indicator configuration.
@@ -513,7 +513,7 @@ class TestIndicatorManager:
         assert 'ema_12' not in manager.historical_data.columns
         assert 'macd_default' not in manager.historical_data.columns
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_bulk_vs_warmup_consistency(self, mock_factory, sample_historical_data, sample_config, mock_handlers):
         """
         Test that bulk and warmup modes produce consistent results.
@@ -569,7 +569,7 @@ class TestIndicatorManager:
         # Both should have same number of rows
         assert len(manager_bulk.historical_data) == len(manager_warmup.historical_data)
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_error_handling_in_factory(self, mock_factory, sample_historical_data, sample_config):
         """
         Test error handling when IndicatorFactory fails.
@@ -588,7 +588,7 @@ class TestIndicatorManager:
         with pytest.raises(Exception, match="Factory initialization failed"):
             IndicatorManager(sample_historical_data, sample_config, is_bulk=True)
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_handler_computation_errors(self, mock_factory, sample_historical_data, sample_config):
         """
         Test behavior when handlers raise errors during computation.
@@ -612,7 +612,7 @@ class TestIndicatorManager:
         with pytest.raises(Exception, match="Handler computation failed"):
             IndicatorManager(sample_historical_data, sample_config, is_bulk=True)
 
-    @patch('indicators.indicator_manager.IndicatorFactory')
+    @patch('app.indicators.indicator_manager.IndicatorFactory')
     def test_compute_indicators_preserves_input(self, mock_factory, sample_historical_data, sample_config, mock_handlers):
         """
         Test that compute_indicators doesn't modify the input row.

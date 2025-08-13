@@ -49,10 +49,10 @@ DEFAULT_PARAMETERS: Dict[str, dict] = {
     'ichimoku': {'tenkan_period': 9, 'kijun_period': 26, 'senkou_b_period': 52, 'chikou_shift': 26},
     'adx': {'period': 14},
     'obv': {'period': 14},
-    'aroon': {},
-    'ema': {},
-    'sma': {},
-    'rma': {},
+    'aroon': {'period': 14},
+    'ema': {'period': 14},
+    'sma': {'period': 14},
+    'rma': {'period': 14},
 }
 
 INDICATOR_CONFIG = {

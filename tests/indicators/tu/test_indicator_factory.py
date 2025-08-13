@@ -30,8 +30,8 @@ class TestIndicatorFactory:
         }
 
     def test_merges_params_correctly(self, monkeypatch, dummy_indicators, dummy_defaults):
-        monkeypatch.setattr('indicators.indicator_factory.INDICATOR_CLASSES', dummy_indicators)
-        monkeypatch.setattr('indicators.indicator_factory.DEFAULT_PARAMETERS', dummy_defaults)
+        monkeypatch.setattr('app.indicators.indicator_factory.INDICATOR_CLASSES', dummy_indicators)
+        monkeypatch.setattr('app.indicators.indicator_factory.DEFAULT_PARAMETERS', dummy_defaults)
 
         config = {'macd_1h': {'slow': 30, 'signal': 7}}
         factory = IndicatorFactory(config)
@@ -48,8 +48,8 @@ class TestIndicatorFactory:
         assert indicator.signal == 7  # overridden
 
     def test_creates_multiple_indicators(self, monkeypatch, dummy_indicators, dummy_defaults):
-        monkeypatch.setattr('indicators.indicator_factory.INDICATOR_CLASSES', dummy_indicators)
-        monkeypatch.setattr('indicators.indicator_factory.DEFAULT_PARAMETERS', dummy_defaults)
+        monkeypatch.setattr('app.indicators.indicator_factory.INDICATOR_CLASSES', dummy_indicators)
+        monkeypatch.setattr('app.indicators.indicator_factory.DEFAULT_PARAMETERS', dummy_defaults)
 
         config = {
             'rsi_15m': {},
@@ -66,8 +66,8 @@ class TestIndicatorFactory:
         assert handlers['macd_4h'].indicator.signal == 6
 
     def test_skips_unknown_indicator(self, monkeypatch, dummy_indicators, dummy_defaults):
-        monkeypatch.setattr('indicators.indicator_factory.INDICATOR_CLASSES', dummy_indicators)
-        monkeypatch.setattr('indicators.indicator_factory.DEFAULT_PARAMETERS', dummy_defaults)
+        monkeypatch.setattr('app.indicators.indicator_factory.INDICATOR_CLASSES', dummy_indicators)
+        monkeypatch.setattr('app.indicators.indicator_factory.DEFAULT_PARAMETERS', dummy_defaults)
 
         config = {
             'unknown_5m': {'foo': 1},
@@ -89,8 +89,8 @@ class TestIndicatorFactory:
         INDICATOR_CLASSES = {'stoch': DummyStoch}
         DEFAULT_PARAMETERS = {'stoch': {'k': 14, 'd': 3}}
 
-        monkeypatch.setattr('indicators.indicator_factory.INDICATOR_CLASSES', INDICATOR_CLASSES)
-        monkeypatch.setattr('indicators.indicator_factory.DEFAULT_PARAMETERS', DEFAULT_PARAMETERS)
+        monkeypatch.setattr('app.indicators.indicator_factory.INDICATOR_CLASSES', INDICATOR_CLASSES)
+        monkeypatch.setattr('app.indicators.indicator_factory.DEFAULT_PARAMETERS', DEFAULT_PARAMETERS)
 
         config = {'stoch_1h': {'k': 10}}
         factory = IndicatorFactory(config)
