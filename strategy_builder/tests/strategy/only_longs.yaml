@@ -1,0 +1,65 @@
+name: One sided strategy
+meta:
+  version: "1.0.0"
+  description: "Simple momentum strategy using RSI and MACD"
+  author: "Quant Team"
+  created_at: "2024-01-01T00:00:00Z"
+
+activation:
+  enabled: true
+  schedule:
+    days: ["mon", "tue", "wed", "thu", "fri"]
+    hours: "09:00-17:00"
+
+timeframes: ["1", "240"]
+
+entry:
+  long:
+    mode: "all"
+    conditions:
+      - signal: "RSI"
+        operator: "<="
+        value: 30
+        timeframe: "1"
+      - signal: "MACD_histogram"
+        operator: "remains"
+        value: 0
+        timeframe: "1"
+
+exit:
+  long:
+    mode: "any"
+    conditions:
+      - signal: "ATR_Stop"
+        operator: "crosses_below"
+        value: "close"
+        timeframe: "1"
+      - signal: "Profit_Ratio"
+        operator: ">="
+        value: 1.5
+        timeframe: "1"
+    time_based:
+      max_duration: "48h"
+
+risk:
+  position_sizing:
+    type: "percentage"
+    value: 1.5  # 1.5% of capital per trade
+    atr_distance: 100000
+
+  sl:
+    type: "indicator"
+    source: "Keltner_Upper"
+    offset: 0.3  # 0.3% buffer above indicator
+    timeframe: "1"
+
+  tp:
+    type: "multi_target"
+    targets:
+      - value: 0.8  # 0.8% - 60% position
+        percent: 60
+      - value: 1.2  # 1.2% - 30% position
+        percent: 30
+      - value: 1.8  # 1.8% - 10% position
+        percent: 10
+        move_stop: true

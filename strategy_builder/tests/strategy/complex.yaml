@@ -1,0 +1,144 @@
+name: Multi-TF Momentum Strategy
+meta:
+  version: "2.3.1"
+  description: "Advanced trend-following strategy with volatility-adjusted position sizing"
+  author: "Quant Research Team"
+  created_at: "2024-03-15T09:30:00Z"
+
+activation:
+  enabled: true
+  schedule:
+    days: ["mon", "tue", "wed", "thu", "fri"]
+    hours: "08:00-16:00"
+    session_handling: "partial_close"
+
+timeframes: ["60", "240", "1d"]
+
+entry:
+  long:
+    mode: "complex"
+    tree:
+      operator: "and"
+      conditions:
+        - operator: "or"
+          conditions:
+            - signal: "MACD_histogram"
+              operator: "crosses_above"
+              value: 0
+              timeframe: "240"
+              lookback: 3
+            - signal: "ADX"
+              operator: ">="
+              value: 25
+              timeframe: "1d"
+              required_confidence: 0.75
+        - signal: "EMA_50"
+          operator: ">"
+          value: "EMA_200"
+          timeframe: "1d"
+        - operator: "not"
+          conditions:
+            - signal: "RSI"
+              operator: ">="
+              value: 70
+              timeframe: "60"
+
+  short:
+    mode: "any"
+    conditions:
+      - signal: "BB_Width"
+        operator: ">"
+        value: 0.15
+        timeframe: "240"
+        lookback: 5
+      - signal: "Volume"
+        operator: ">"
+        value: 1500000
+        timeframe: "60"
+        required_confidence: 0.9
+
+exit:
+  long:
+    mode: "any"
+    conditions:
+      - signal: "Profit"
+        operator: ">="
+        value: 2.5
+        timeframe: "60"
+      - signal: "ATR_Stop"
+        operator: "crosses_below"
+        value: "close"
+        timeframe: "240"
+    profit_guard:
+      max_drawdown: 0.4
+      trailing: 0.25
+    time_based:
+      max_duration: "72h"
+      min_duration: "4h"
+
+#  short:
+#    mode: "complex"
+#    conditions:
+#      tree:
+#        operator: "and"
+#        conditions:
+#          - operator: "not"
+#            conditions:
+#              - signal: "Trend_Strength"
+#                operator: ">"
+#                value: 65
+#                timeframe: "1d"
+#          - operator: "or"
+#            conditions:
+#              - signal: "Fibonacci_Retracement"
+#                operator: "crosses_below"
+#                value: 0.618
+#                timeframe: "4h"
+#              - signal: "Volume"
+#                operator: "<="
+#                value: 500000
+#                timeframe: "1h"
+
+  short:
+    mode: "complex"
+    tree:
+      operator: "and"
+      conditions:
+        - operator: "not"
+          conditions:
+            - signal: "Trend_Strength"
+              operator: ">"
+              value: 65
+              timeframe: "1d"
+        - operator: "or"
+          conditions:
+            - signal: "Fibonacci_Retracement"
+              operator: "crosses_below"
+              value: 0.618
+              timeframe: "240"
+            - signal: "Volume"
+              operator: "<="
+              value: 500000
+              timeframe: "60"
+
+
+risk:
+  position_sizing:
+    type: "volatility"
+    value: 1.5
+    atr_distance: 1000000
+  sl:
+    type: "trailing"
+    step: 0.5
+    activation_price: 1.2
+    cap: 2.0
+  tp:
+    type: "multi_target"
+    targets:
+      - value: 1.0
+        percent: 40
+        move_stop: true
+      - value: 1.8
+        percent: 30
+      - value: 2.5
+        percent: 30
