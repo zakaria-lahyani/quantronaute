@@ -95,7 +95,7 @@ class StrategyEngineFactory:
         validation_service: ValidationService = create_validation_service()
         config_loader: ConfigurationLoader = create_configuration_loader(config_manager, validation_service)
         
-        # Create core dependencies
+        # Create api dependencies
         evaluator_factory: EvaluatorFactory = create_evaluator_factory(logger)
         strategy_loader: StrategyLoaderInterface = create_strategy_loader(
             schema_path, config_paths, config_loader, logger
@@ -140,7 +140,7 @@ class StrategyEngineFactory:
         validation_service: ValidationService = create_validation_service()
         config_loader: ConfigurationLoader = create_configuration_loader(config_manager, validation_service)
         
-        # Create core dependencies
+        # Create api dependencies
         evaluator_factory: EvaluatorFactory = create_evaluator_factory(logger)
         strategy_loader: StrategyLoaderInterface = create_strategy_loader(
             schema_path, config_paths, config_loader, logger

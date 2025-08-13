@@ -315,7 +315,7 @@ class TradingStrategy(BaseModel):
     """Complete trading strategy configuration."""
     model_config = ConfigDict(extra="forbid", validate_default=True)
 
-    # Required core fields
+    # Required api fields
     name: str = Field(..., min_length=1, max_length=100)
     timeframes: List[TimeFrameEnum] = Field(..., min_length=1)
     entry: EntryDirectionalRules
