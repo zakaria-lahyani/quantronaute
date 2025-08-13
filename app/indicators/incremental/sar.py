@@ -1,6 +1,6 @@
 import numpy as np
 
-from indicators.batch.sar import sar_batch
+from app.indicators.batch.sar import sar_batch
 
 
 class SAR:

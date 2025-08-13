@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Dict, List, Callable, Any, Tuple, Union
 
-from indicators.registry import INDICATOR_CONFIG
+from app.indicators.registry import INDICATOR_CONFIG
 
 
 class IndicatorHandler:

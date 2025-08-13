@@ -1,5 +1,5 @@
-from indicators.indicator_manager import IndicatorManager
-from indicators.processors.recent_row_processor import RecentRowsProcessor
+from app.indicators.indicator_manager import IndicatorManager
+from app.indicators.processors.recent_row_processor import RecentRowsProcessor
 
 from typing import Dict
 

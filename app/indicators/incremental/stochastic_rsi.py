@@ -2,8 +2,8 @@ from collections import deque
 import numpy as np
 import pandas as pd
 
-from indicators.incremental.rsi import RSI
-from indicators.incremental.sma import SMA
+from app.indicators.incremental.rsi import RSI
+from app.indicators.incremental.sma import SMA
 
 
 class StochasticRSI:
@@ -63,7 +63,7 @@ class StochasticRSI:
         prices = np.asarray(prices, dtype=np.float64)
 
         # Step 1: Compute RSI batch
-        from indicators.batch.rsi import rsi_batch  # assume you have this
+        from app.indicators.batch.rsi import rsi_batch  # assume you have this
         rsi_values = rsi_batch(prices, self.rsi.period)
 
         # Step 2: Compute Stochastic RSI (%K unsmoothed)

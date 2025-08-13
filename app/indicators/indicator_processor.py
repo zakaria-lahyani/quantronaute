@@ -24,9 +24,9 @@ Architecture:
 from typing import Dict, Optional, List
 import pandas as pd
 import logging
-from indicators.indicator_manager import IndicatorManager
-from indicators.processors.historical_data_processor import HistoricalDataProcessor
-from indicators.processors.recent_row_processor import RecentRowsProcessor
+from app.indicators.indicator_manager import IndicatorManager
+from app.indicators.processors.historical_data_processor import HistoricalDataProcessor
+from app.indicators.processors.recent_row_processor import RecentRowsProcessor
 
 
 class IndicatorProcessor:

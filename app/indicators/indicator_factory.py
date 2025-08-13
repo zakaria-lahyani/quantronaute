@@ -1,5 +1,5 @@
-from indicators.indicator_handler import IndicatorHandler
-from indicators.registry import INDICATOR_CLASSES, DEFAULT_PARAMETERS
+from app.indicators.indicator_handler import IndicatorHandler
+from app.indicators.registry import INDICATOR_CLASSES, DEFAULT_PARAMETERS
 
 from typing import Dict
 

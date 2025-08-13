@@ -1,6 +1,6 @@
 import numpy as np
 
-from indicators.batch.ema import ema_numba
+from app.indicators.batch.ema import ema_numba
 
 
 class EMA:

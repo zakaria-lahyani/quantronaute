@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Dict
 
-from indicators.indicator_factory import IndicatorFactory
+from app.indicators.indicator_factory import IndicatorFactory
 
 
 class IndicatorManager:

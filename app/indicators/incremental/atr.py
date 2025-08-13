@@ -1,7 +1,7 @@
 from collections import deque
 import numpy as np
 
-from indicators.batch.atr import compute_true_range, compute_atr
+from app.indicators.batch.atr import compute_true_range, compute_atr
 
 
 class ATR:

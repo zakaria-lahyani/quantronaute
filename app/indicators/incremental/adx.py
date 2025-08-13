@@ -46,8 +46,8 @@ adx, plus_di, minus_di = adx_batch_numba(high, low, close, period=14)
 from collections import deque
 import numpy as np
 
-from indicators.batch.adx import adx_batch_numba
-from indicators.incremental.rma import RMA
+from app.indicators.batch.adx import adx_batch_numba
+from app.indicators.incremental.rma import RMA
 
 
 class ADX:

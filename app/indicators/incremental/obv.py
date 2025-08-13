@@ -1,5 +1,5 @@
 import numpy as np
-from indicators.incremental.ema import EMA
+from app.indicators.incremental.ema import EMA
 
 
 class OBV:

@@ -1,7 +1,7 @@
 from collections import deque
 import numpy as np
 
-from indicators.batch.sma import sma_batch
+from app.indicators.batch.sma import sma_batch
 
 
 class SMA:

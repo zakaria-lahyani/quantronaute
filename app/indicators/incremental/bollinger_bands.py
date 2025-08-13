@@ -1,7 +1,7 @@
 from collections import deque
 import numpy as np
 
-from indicators.batch.bollinger_bands import bollinger_bands_batch
+from app.indicators.batch.bollinger_bands import bollinger_bands_batch
 
 
 class BollingerBands:

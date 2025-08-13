@@ -1,7 +1,7 @@
 import numpy as np
 from collections import deque
 
-from indicators.batch.ichimoku import ichimoku_batch_numba, decode_cloud
+from app.indicators.batch.ichimoku import ichimoku_batch_numba, decode_cloud
 
 
 class Ichimoku:

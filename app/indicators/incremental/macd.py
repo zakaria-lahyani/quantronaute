@@ -1,5 +1,5 @@
-from indicators.incremental.ema import EMA
-from indicators.batch.macd import macd_batch_update
+from app.indicators.incremental.ema import EMA
+from app.indicators.batch.macd import macd_batch_update
 import numpy as np
 
 class MACD:

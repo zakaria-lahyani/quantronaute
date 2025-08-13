@@ -1,9 +1,9 @@
 import numpy as np
 from collections import deque
-from indicators.incremental.ema import EMA
+from app.indicators.incremental.ema import EMA
 
-from indicators.batch.ema import ema_numba
-from indicators.batch.rsi import rsi_batch
+from app.indicators.batch.ema import ema_numba
+from app.indicators.batch.rsi import rsi_batch
 
 
 class RSI:

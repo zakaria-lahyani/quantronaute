@@ -1,8 +1,8 @@
 import numpy as np
 from numba import njit
 
-from indicators.batch.atr import compute_true_range
-from indicators.batch.ema import ema_numba
+from app.indicators.batch.atr import compute_true_range
+from app.indicators.batch.ema import ema_numba
 
 
 @njit

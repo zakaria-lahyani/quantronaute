@@ -1,21 +1,21 @@
 from typing import Dict, Type
 
-from indicators.incremental.aroon import Aroon
-from indicators.incremental.adx import ADX
-from indicators.incremental.bollinger_bands import BollingerBands
-from indicators.incremental.ichimoku import Ichimoku
-from indicators.incremental.keltner_channel import KeltnerChannel
-from indicators.incremental.stochastic_rsi import StochasticRSI
-from indicators.incremental.supertrend import Supertrend
-from indicators.incremental.ultimate_rsi import UltimateRsi
-from indicators.incremental.obv import OBV
-from indicators.incremental.macd import MACD
-from indicators.incremental.atr import ATR
-from indicators.incremental.rsi import RSI
-from indicators.incremental.sar import SAR
-from indicators.incremental.ema import EMA
-from indicators.incremental.sma import SMA
-from indicators.incremental.rma import RMA
+from app.indicators.incremental.aroon import Aroon
+from app.indicators.incremental.adx import ADX
+from app.indicators.incremental.bollinger_bands import BollingerBands
+from app.indicators.incremental.ichimoku import Ichimoku
+from app.indicators.incremental.keltner_channel import KeltnerChannel
+from app.indicators.incremental.stochastic_rsi import StochasticRSI
+from app.indicators.incremental.supertrend import Supertrend
+from app.indicators.incremental.ultimate_rsi import UltimateRsi
+from app.indicators.incremental.obv import OBV
+from app.indicators.incremental.macd import MACD
+from app.indicators.incremental.atr import ATR
+from app.indicators.incremental.rsi import RSI
+from app.indicators.incremental.sar import SAR
+from app.indicators.incremental.ema import EMA
+from app.indicators.incremental.sma import SMA
+from app.indicators.incremental.rma import RMA
 
 INDICATOR_CLASSES: Dict[str, Type] = {
     'aroon': Aroon,

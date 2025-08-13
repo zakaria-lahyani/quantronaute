@@ -1,6 +1,6 @@
 from collections import deque
 import numpy as np
-from indicators.batch.aroon import aroon_batch_numba
+from app.indicators.batch.aroon import aroon_batch_numba
 
 class Aroon:
     def __init__(self, period):

@@ -1,8 +1,8 @@
 import numpy as np
 from collections import deque
 
-from indicators.batch.keltner_channel import keltner_channel_batch
-from indicators.incremental.ema import EMA
+from app.indicators.batch.keltner_channel import keltner_channel_batch
+from app.indicators.incremental.ema import EMA
 
 
 class KeltnerChannel:

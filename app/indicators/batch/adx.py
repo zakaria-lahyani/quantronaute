@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 
-from indicators.batch.rma import compute_rma
+from app.indicators.batch.rma import compute_rma
 
 
 @njit

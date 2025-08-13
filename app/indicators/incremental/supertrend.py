@@ -1,5 +1,5 @@
-from indicators.batch.supertrend import supertrend_batch_numba
-from indicators.incremental.atr import ATR
+from app.indicators.batch.supertrend import supertrend_batch_numba
+from app.indicators.incremental.atr import ATR
 import numpy as np
 
 

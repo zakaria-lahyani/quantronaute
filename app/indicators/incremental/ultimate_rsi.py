@@ -1,8 +1,8 @@
 from collections import deque
 import numpy as np
 
-from indicators.batch.ultimate_rsi import ultimate_rsi_batch
-from indicators.incremental.rma import RMA
+from app.indicators.batch.ultimate_rsi import ultimate_rsi_batch
+from app.indicators.incremental.rma import RMA
 
 class UltimateRsi:
     def __init__(self, src='close', length=14, smooth_length=14):
