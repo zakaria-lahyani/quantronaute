@@ -1,0 +1,14 @@
+# contain strat factory 
+# import strategy.*
+# import risk_manager.*
+git+ssh://git@github.com/zakaria-lahyani/risk_captain.git 
+
+# import indicators.* 
+git+ssh://git@github.com/zakaria-lahyani/price_wave.git 
+
+
+# for backtest 
+vectorbt
+
+pyyaml
+pyarrow
