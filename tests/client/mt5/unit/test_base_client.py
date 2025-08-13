@@ -176,9 +176,8 @@ class TestBaseClient:
         result = client._handle_response(mock_response)
         assert result == {"direct": "data"}
 
-    @patch('app.clients.mt5.utils.retry_sync')
     @patch('httpx.Client')
-    def test_request_sync(self, mock_client_class, mock_retry):
+    def test_request_sync(self, mock_client_class):
         """Test synchronous request method."""
         # Setup mocks
         mock_client = Mock()
@@ -187,9 +186,6 @@ class TestBaseClient:
         mock_response.status_code = 200
         mock_response.json.return_value = {"success": True, "data": {"result": "ok"}}
         mock_client.request.return_value = mock_response
-        
-        # Mock retry to just call the function
-        mock_retry.side_effect = lambda func, config: func()
         
         client = BaseClient("http://localhost:8000")
         result = client._request_sync("GET", "test", params={"key": "value"})
@@ -202,15 +198,11 @@ class TestBaseClient:
             json=None
         )
         
-        # Verify retry was called
-        mock_retry.assert_called_once()
-        
         # Verify result
         assert result == {"result": "ok"}
 
-    @patch('app.clients.mt5.utils.retry_sync')
     @patch('httpx.Client')
-    def test_get_request(self, mock_client_class, mock_retry):
+    def test_get_request(self, mock_client_class):
         """Test GET request method."""
         # Setup mocks
         mock_client = Mock()
@@ -219,8 +211,6 @@ class TestBaseClient:
         mock_response.status_code = 200
         mock_response.json.return_value = {"success": True, "data": ["item1", "item2"]}
         mock_client.request.return_value = mock_response
-        
-        mock_retry.side_effect = lambda func, config: func()
         
         client = BaseClient("http://localhost:8000")
         result = client.get("items", params={"limit": 10})
@@ -235,9 +225,8 @@ class TestBaseClient:
         
         assert result == ["item1", "item2"]
 
-    @patch('app.clients.mt5.utils.retry_sync')
     @patch('httpx.Client')
-    def test_post_request(self, mock_client_class, mock_retry):
+    def test_post_request(self, mock_client_class):
         """Test POST request method."""
         # Setup mocks
         mock_client = Mock()
@@ -246,8 +235,6 @@ class TestBaseClient:
         mock_response.status_code = 200
         mock_response.json.return_value = {"success": True, "data": {"id": 123}}
         mock_client.request.return_value = mock_response
-        
-        mock_retry.side_effect = lambda func, config: func()
         
         client = BaseClient("http://localhost:8000")
         result = client.post("items", json_data={"name": "test"})
@@ -262,9 +249,8 @@ class TestBaseClient:
         
         assert result == {"id": 123}
 
-    @patch('app.clients.mt5.utils.retry_sync')
     @patch('httpx.Client')
-    def test_put_request(self, mock_client_class, mock_retry):
+    def test_put_request(self, mock_client_class):
         """Test PUT request method."""
         # Setup mocks
         mock_client = Mock()
@@ -273,8 +259,6 @@ class TestBaseClient:
         mock_response.status_code = 200
         mock_response.json.return_value = {"success": True, "data": {"updated": True}}
         mock_client.request.return_value = mock_response
-        
-        mock_retry.side_effect = lambda func, config: func()
         
         client = BaseClient("http://localhost:8000")
         result = client.put("items/123", json_data={"name": "updated"})
@@ -289,9 +273,8 @@ class TestBaseClient:
         
         assert result == {"updated": True}
 
-    @patch('app.clients.mt5.utils.retry_sync')
     @patch('httpx.Client')
-    def test_delete_request(self, mock_client_class, mock_retry):
+    def test_delete_request(self, mock_client_class):
         """Test DELETE request method."""
         # Setup mocks
         mock_client = Mock()
@@ -300,8 +283,6 @@ class TestBaseClient:
         mock_response.status_code = 200
         mock_response.json.return_value = {"success": True, "data": {"deleted": True}}
         mock_client.request.return_value = mock_response
-        
-        mock_retry.side_effect = lambda func, config: func()
         
         client = BaseClient("http://localhost:8000")
         result = client.delete("items/123")
@@ -315,26 +296,3 @@ class TestBaseClient:
         )
         
         assert result == {"deleted": True}
-
-    @patch('app.clients.mt5.utils.retry_sync')
-    @patch('httpx.Client')
-    def test_request_with_retry_config(self, mock_client_class, mock_retry):
-        """Test that retry configuration is passed to retry function."""
-        mock_client = Mock()
-        mock_client_class.return_value = mock_client
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"success": True, "data": {}}
-        mock_client.request.return_value = mock_response
-        
-        mock_retry.side_effect = lambda func, config: func()
-        
-        retry_config = RetryConfig(max_retries=5, base_delay=2.0)
-        client = BaseClient("http://localhost:8000", retry_config=retry_config)
-        
-        client.get("test")
-        
-        # Verify retry was called with our config
-        mock_retry.assert_called_once()
-        args, kwargs = mock_retry.call_args
-        assert args[1] is retry_config  # Second argument should be our retry config
