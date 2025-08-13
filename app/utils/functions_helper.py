@@ -4,8 +4,8 @@ import os
 from typing import List
 import hashlib
 
-from strategy.core.domain.enums import TimeFrameEnum
-from utils.logger import AppLogger
+from ..strategy_builder.core.domain.enums import TimeFrameEnum
+from .logger import AppLogger
 
 logger = AppLogger.get_logger("mt5-app")
 
