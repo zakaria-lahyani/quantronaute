@@ -4,19 +4,14 @@ High-level factory for creating strategy engine instances with all dependencies.
 
 import os
 from typing import List, Optional
-from pathlib import Path
-try:
-    # Python 3.9+
-    from importlib.resources import files
-except ImportError:
-    # Python 3.8 fallback
-    from importlib_resources import files
 
-from .core import ConfigurationManager, ValidationService, EvaluatorFactory, StrategyLoaderInterface
-from .core.services import create_strategy_engine
-from .core.services.loader import create_strategy_loader
-from .core.evaluators import create_evaluator_factory
-from .infrastructure import (
+from importlib.resources import files
+
+from strategy_builder.core.domain.protocols import ConfigurationManager, ValidationService, EvaluatorFactory, StrategyLoaderInterface
+from strategy_builder.core.services import create_strategy_engine
+from strategy_builder.core.services.loader import create_strategy_loader
+from strategy_builder.core.evaluators import create_evaluator_factory
+from strategy_builder.infrastructure import (
     create_logger,
     create_configuration_loader,
     create_config_manager,
@@ -27,7 +22,7 @@ def get_default_schema_path() -> str:
     """Get the path to the default schema file, handling both development and installed package scenarios."""
     try:
         # Try to use importlib.resources for installed packages
-        schema_files = files("strategy") / "config" / "strategy_schema.json"
+        schema_files = files("strategy_builder") / "config" / "strategy_schema.json"
         if hasattr(schema_files, 'read_text'):
             # For Python 3.9+ or when the file exists as a resource
             return str(schema_files)
@@ -137,7 +132,7 @@ class StrategyEngineFactory:
         
         if not os.path.exists(schema_path):
             raise FileNotFoundError(f"Schema file not found: {schema_path}")
-        from .infrastructure.logging import create_null_logger
+        from strategy_builder.infrastructure.logging import create_null_logger
         
         # Create infrastructure dependencies with null logger
         logger = create_null_logger()

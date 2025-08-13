@@ -5,7 +5,7 @@ Configuration management for the strategy engine.
 import yaml
 from typing import Any, Dict, List
 
-from ..core.domain.protocols import ConfigurationManager, ValidationService
+from strategy_builder.core.domain.protocols import ConfigurationManager, ValidationService
 
 
 class YamlConfigurationManager:

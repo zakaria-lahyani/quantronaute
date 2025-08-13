@@ -6,10 +6,10 @@ from collections import deque
 from typing import Dict, List
 import pandas as pd
 
-from ..domain.protocols import StrategyLoaderInterface, EvaluatorFactory, Logger
-from ..domain.models import TradingStrategy
-from ...data.dtos import AllStrategiesEvaluationResult, StrategyEvaluationResult
-from .executor import create_strategy_executor
+from strategy_builder.core.domain.protocols import StrategyLoaderInterface, EvaluatorFactory, Logger
+from strategy_builder.core.domain.models import TradingStrategy
+from strategy_builder.data.dtos import AllStrategiesEvaluationResult, StrategyEvaluationResult
+from strategy_builder.core.services.executor import create_strategy_executor
 
 
 class StrategyEngine:

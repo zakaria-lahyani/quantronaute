@@ -4,7 +4,7 @@ Logging abstraction for the strategy engine.
 
 import logging
 
-from ..core.domain.protocols import Logger
+from strategy_builder.core.domain.protocols import Logger
 
 
 class StrategyLogger:

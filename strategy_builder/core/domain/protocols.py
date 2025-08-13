@@ -7,7 +7,7 @@ from collections import deque
 from typing import Any, Dict, List, Optional, Protocol
 import pandas as pd
 
-from .models import Condition, EntryRules, ExitRules, TradingStrategy
+from strategy_builder.core.domain.models import Condition, EntryRules, ExitRules, TradingStrategy
 
 
 class DataProvider(Protocol):

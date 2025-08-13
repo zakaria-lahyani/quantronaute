@@ -7,8 +7,8 @@ This script runs all tests in the correct order and provides detailed reporting:
 3. Performance tests (load and stress testing)
 
 Usage:
-    python -m strategy.tests.run_all_tests
-    python strategy/tests/run_all_tests.py
+    python -m strategy_builder.tests.run_all_tests
+    python strategy_builder/tests/run_all_tests.py
 """
 
 import unittest
@@ -16,6 +16,12 @@ import sys
 import time
 from io import StringIO
 from pathlib import Path
+import os
+
+# Set UTF-8 encoding for Windows console
+if sys.platform == 'win32':
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    sys.stdout.reconfigure(encoding='utf-8')
 
 # Add the strategy package to the path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -27,6 +33,7 @@ class ColoredTestResult(unittest.TextTestResult):
     def __init__(self, stream, descriptions, verbosity):
         super().__init__(stream, descriptions, verbosity)
         self.success_count = 0
+        self.verbosity = verbosity
     
     def addSuccess(self, test):
         super().addSuccess(test)
@@ -206,51 +213,6 @@ def run_comprehensive_tests():
         return False
 
 
-def run_quick_smoke_test():
-    """Run a quick smoke test to verify basic functionality."""
-    print("💨 Running Quick Smoke Test...")
-    print("="*40)
-    
-    try:
-        # Test basic imports
-        print("📦 Testing imports...")
-        from strategy.factory import StrategyEngineFactory
-        from strategy.core.domain import models
-        from strategy.core.evaluators import condition, logic
-        from strategy.infrastructure import config, logging
-        print("✅ All imports successful")
-        
-        # Test factory creation
-        print("🏭 Testing factory creation...")
-        # This would normally require actual files, so we'll just test the import
-        print("✅ Factory import successful")
-        
-        # Test model creation
-        print("📋 Testing model creation...")
-        from strategy.core.domain.models import Condition, EntryRules
-        from strategy.core.domain.enums import ConditionOperatorEnum, TimeFrameEnum, LogicModeEnum
-        
-        condition = Condition(
-            signal="rsi",
-            operator=ConditionOperatorEnum.LT,
-            value=30,
-            timeframe=TimeFrameEnum.M1
-        )
-        
-        entry_rules = EntryRules(
-            mode=LogicModeEnum.ALL,
-            conditions=[condition]
-        )
-        print("✅ Model creation successful")
-        
-        print("\n🎉 Smoke test completed successfully!")
-        return True
-        
-    except Exception as e:
-        print(f"\n❌ Smoke test failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
 
 
 def main():
@@ -258,11 +220,6 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="Strategy Engine Test Runner")
-    parser.add_argument(
-        "--smoke", 
-        action="store_true", 
-        help="Run only smoke tests for quick validation"
-    )
     parser.add_argument(
         "--unit-only", 
         action="store_true", 
@@ -275,11 +232,7 @@ def main():
     )
     
     args = parser.parse_args()
-    
-    if args.smoke:
-        success = run_quick_smoke_test()
-        sys.exit(0 if success else 1)
-    
+
     if args.unit_only:
         result, _ = discover_and_run_tests("unit", "test_*.py", "UNIT TESTS ONLY")
         success = len(result.failures) == 0 and len(result.errors) == 0

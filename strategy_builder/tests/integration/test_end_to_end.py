@@ -18,10 +18,11 @@ import tempfile
 import os
 import yaml
 
-from strategy.core import create_evaluator_factory, create_strategy_executor
-from strategy.factory import StrategyEngineFactory
-from strategy.infrastructure.logging import create_null_logger
-from strategy.tests.fixtures.mock_data import create_mock_market_data
+from strategy_builder.core.evaluators import create_evaluator_factory
+from strategy_builder.core.services import create_strategy_executor
+from strategy_builder.factory import StrategyEngineFactory
+from strategy_builder.infrastructure.logging import create_null_logger
+from strategy_builder.tests.fixtures.mock_data import create_mock_market_data
 
 
 class TestEndToEndWorkflow(unittest.TestCase):

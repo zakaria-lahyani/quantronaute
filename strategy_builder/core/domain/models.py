@@ -15,7 +15,7 @@ from pydantic import (
 )
 import re
 
-from .enums import (
+from strategy_builder.core.domain.enums import (
     TimeFrameEnum,
     DaysEnum,
     ConditionOperatorEnum,
@@ -255,8 +255,14 @@ class BaseRuleSet(BaseModel):
             if self.conditions:
                 raise ValueError("Cannot use conditions array in complex mode")
         else:
+            # For simple modes, allow empty conditions for ExitRules with time_based or profit_guard
             if not self.conditions:
-                raise ValueError("Conditions array required in simple modes")
+                # Check if this is an ExitRules instance with alternative exit mechanisms
+                if hasattr(self, 'time_based') or hasattr(self, 'profit_guard'):
+                    # Allow empty conditions if time_based or profit_guard are present
+                    pass
+                else:
+                    raise ValueError("Conditions array required in simple modes")
             if self.tree:
                 raise ValueError("Cannot use tree in simple modes")
         return self

@@ -6,9 +6,10 @@ import unittest
 from datetime import datetime, timedelta
 from unittest.mock import Mock
 
-from ...core.evaluators.logic import LogicEvaluator
-from ...core.domain import ExitRules, TimeBasedExit, LogicModeEnum
-from ...infrastructure.logging import create_null_logger
+from strategy_builder.core.evaluators.logic import LogicEvaluator
+from strategy_builder.core.domain.models import ExitRules, TimeBasedExit
+from strategy_builder.core.domain.enums import LogicModeEnum
+from strategy_builder.infrastructure.logging import create_null_logger
 
 
 class TestTimeBasedExit(unittest.TestCase):
@@ -123,7 +124,8 @@ class TestTimeBasedExit(unittest.TestCase):
         # Mock condition evaluator to return False for regular conditions
         self.mock_condition_evaluator.evaluate.return_value = False
         
-        from ...core.domain import Condition, ConditionOperatorEnum, TimeFrameEnum
+        from strategy_builder.core.domain.models import Condition
+        from strategy_builder.core.domain.enums import ConditionOperatorEnum, TimeFrameEnum
         
         exit_rules = ExitRules(
             mode=LogicModeEnum.ANY,

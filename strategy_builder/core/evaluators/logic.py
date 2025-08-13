@@ -6,9 +6,9 @@ from typing import Union, Optional, Dict, Any
 from datetime import datetime, timedelta
 import re
 
-from ..domain.protocols import LogicEvaluatorInterface, ConditionEvaluatorInterface
-from ..domain.models import ConditionTree, Condition, EntryRules, ExitRules, TimeBasedExit
-from ..domain.enums import LogicModeEnum
+from strategy_builder.core.domain.protocols import LogicEvaluatorInterface, ConditionEvaluatorInterface
+from strategy_builder.core.domain.models import ConditionTree, Condition, EntryRules, ExitRules, TimeBasedExit
+from strategy_builder.core.domain.enums import LogicModeEnum
 
 
 class LogicEvaluator(LogicEvaluatorInterface):
@@ -107,17 +107,17 @@ class LogicEvaluator(LogicEvaluatorInterface):
         """
         if exit_rules.mode == LogicModeEnum.ALL:
             if not exit_rules.conditions:
-                return True  # No conditions means always true for exit
+                return False  # No basic conditions means false (rely on time_based/profit_guard)
             return all(self.condition_evaluator.evaluate(cond) for cond in exit_rules.conditions)
         
         elif exit_rules.mode == LogicModeEnum.ANY:
             if not exit_rules.conditions:
-                return True  # No conditions means always true for exit
+                return False  # No basic conditions means false (rely on time_based/profit_guard)
             return any(self.condition_evaluator.evaluate(cond) for cond in exit_rules.conditions)
         
         elif exit_rules.mode == LogicModeEnum.COMPLEX:
             if not exit_rules.tree:
-                return True  # No tree means always true for exit
+                return False  # No tree means false (rely on time_based/profit_guard)
             return self._evaluate_tree(exit_rules.tree)
         
         else:

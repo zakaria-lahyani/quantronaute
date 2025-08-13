@@ -6,7 +6,7 @@ from collections import deque
 from typing import Dict
 import pandas as pd
 
-from ...core.domain import TimeFrameEnum
+from strategy_builder.core.domain.enums import TimeFrameEnum
 
 
 def create_mock_market_data() -> Dict[str, deque[pd.Series]]:

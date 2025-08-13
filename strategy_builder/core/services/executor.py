@@ -6,9 +6,9 @@ from collections import deque
 from typing import Dict, Optional, Any
 import pandas as pd
 
-from ..domain.protocols import StrategyExecutorInterface, EvaluatorFactory
-from ..domain.models import TradingStrategy
-from ...data.dtos import SignalResult
+from strategy_builder.core.domain.protocols import StrategyExecutorInterface, EvaluatorFactory
+from strategy_builder.core.domain.models import TradingStrategy
+from strategy_builder.data.dtos import SignalResult
 
 
 class StrategyExecutor(StrategyExecutorInterface):

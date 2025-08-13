@@ -6,9 +6,9 @@ import pandas as pd
 from collections import deque
 from typing import Dict, Union
 
-from ..domain.protocols import ConditionEvaluatorInterface, Logger
-from ..domain.models import Condition
-from ..domain.enums import ConditionOperatorEnum
+from strategy_builder.core.domain.protocols import ConditionEvaluatorInterface, Logger
+from strategy_builder.core.domain.models import Condition
+from strategy_builder.core.domain.enums import ConditionOperatorEnum
 
 
 class ConditionEvaluator(ConditionEvaluatorInterface):
@@ -46,32 +46,46 @@ class ConditionEvaluator(ConditionEvaluatorInterface):
         
         row = self.recent_rows[tf][-1]
         
-        # Get current and previous signal values
+        # Get current signal value
         current_signal = row.get(condition.signal)
-        previous_signal = row.get(f"previous_{condition.signal}")
-        
-        if current_signal is None or previous_signal is None:
+        if current_signal is None:
             self.logger.warning(
-                f"ConditionEvaluator: {condition.signal} or previous_{condition.signal} is None"
+                f"ConditionEvaluator: {condition.signal} is None"
             )
             return False
         
-        # Handle special operators
-        if condition.operator == ConditionOperatorEnum.CROSSES_ABOVE:
-            return self._crosses(previous_signal, current_signal, row, condition.value, direction="above")
+        # Check if we need previous signal (only for certain operators)
+        needs_previous = condition.operator in [
+            ConditionOperatorEnum.CROSSES_ABOVE,
+            ConditionOperatorEnum.CROSSES_BELOW,
+            ConditionOperatorEnum.CHANGES_TO,
+            ConditionOperatorEnum.REMAINS
+        ]
         
-        if condition.operator == ConditionOperatorEnum.CROSSES_BELOW:
-            return self._crosses(previous_signal, current_signal, row, condition.value, direction="below")
+        if needs_previous:
+            previous_signal = row.get(f"previous_{condition.signal}")
+            if previous_signal is None:
+                self.logger.warning(
+                    f"ConditionEvaluator: previous_{condition.signal} is None (required for {condition.operator.value})"
+                )
+                return False
+            
+            # Handle operators that need previous values
+            if condition.operator == ConditionOperatorEnum.CROSSES_ABOVE:
+                return self._crosses(previous_signal, current_signal, row, condition.value, direction="above")
+            
+            if condition.operator == ConditionOperatorEnum.CROSSES_BELOW:
+                return self._crosses(previous_signal, current_signal, row, condition.value, direction="below")
+            
+            if condition.operator == ConditionOperatorEnum.CHANGES_TO:
+                target_value = self._resolve_value(condition.value, row, current_signal)
+                return current_signal == target_value and previous_signal != target_value
+            
+            if condition.operator == ConditionOperatorEnum.REMAINS:
+                target_value = self._resolve_value(condition.value, row, current_signal)
+                return current_signal == target_value and previous_signal == target_value
         
-        if condition.operator == ConditionOperatorEnum.CHANGES_TO:
-            target_value = self._resolve_value(condition.value, row, current_signal)
-            return current_signal == target_value and previous_signal != target_value
-        
-        if condition.operator == ConditionOperatorEnum.REMAINS:
-            target_value = self._resolve_value(condition.value, row, current_signal)
-            return current_signal == target_value and previous_signal == target_value
-        
-        # Handle standard comparison operators
+        # Handle standard comparison operators (don't need previous values)
         target_value = self._resolve_value(condition.value, row, current_signal)
         return self._compare(current_signal, condition.operator, target_value)
     

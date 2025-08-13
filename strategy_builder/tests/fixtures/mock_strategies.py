@@ -1,8 +1,8 @@
 """
 Mock strategy configurations for testing.
 """
-
-from ...core.domain import (
+from strategy_builder.core.domain.enums import TimeFrameEnum, LogicModeEnum, ConditionOperatorEnum
+from strategy_builder.core.domain.models import (
     TradingStrategy,
     EntryDirectionalRules,
     EntryRules,
@@ -11,10 +11,7 @@ from ...core.domain import (
     Condition,
     RiskManagement,
     FixedStopLoss,
-    FixedTakeProfit,
-    TimeFrameEnum,
-    ConditionOperatorEnum,
-    LogicModeEnum
+    FixedTakeProfit
 )
 
 

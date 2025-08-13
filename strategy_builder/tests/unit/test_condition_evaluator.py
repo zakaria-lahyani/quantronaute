@@ -6,10 +6,11 @@ import unittest
 import pandas as pd
 from collections import deque
 
-from ...core.evaluators.condition import ConditionEvaluator
-from ...core.domain import Condition, ConditionOperatorEnum, TimeFrameEnum
-from ...infrastructure.logging import create_null_logger
-from ..fixtures.mock_data import create_mock_market_data
+from strategy_builder.core.domain.enums import TimeFrameEnum, ConditionOperatorEnum
+from strategy_builder.core.domain.models import Condition
+from strategy_builder.core.evaluators.condition import ConditionEvaluator
+from strategy_builder.infrastructure.logging import create_null_logger
+from strategy_builder.tests.fixtures.mock_data import create_mock_market_data
 
 
 class TestConditionEvaluator(unittest.TestCase):

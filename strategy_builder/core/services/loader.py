@@ -4,9 +4,9 @@ Strategy loader with dependency injection.
 
 from typing import Dict, List
 
-from ..domain.protocols import StrategyLoaderInterface, Logger
-from ..domain.models import TradingStrategy
-from ...infrastructure.config import ConfigurationLoader
+from strategy_builder.core.domain.protocols import StrategyLoaderInterface, Logger
+from strategy_builder.core.domain.models import TradingStrategy
+from strategy_builder.infrastructure.config import ConfigurationLoader
 
 
 class StrategyLoader(StrategyLoaderInterface):

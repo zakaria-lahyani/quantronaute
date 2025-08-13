@@ -6,14 +6,14 @@ from collections import deque
 from typing import Dict, Optional, Any
 import pandas as pd
 
-from ..domain.protocols import (
+from strategy_builder.core.domain.protocols import (
     EvaluatorFactory,
     ConditionEvaluatorInterface,
     LogicEvaluatorInterface,
     Logger
 )
-from .condition import ConditionEvaluator
-from .logic import LogicEvaluator
+from strategy_builder.core.evaluators.condition import ConditionEvaluator
+from strategy_builder.core.evaluators.logic import LogicEvaluator
 
 
 class DefaultEvaluatorFactory:
