@@ -6,30 +6,8 @@ import yaml
 from typing import Any, Dict, List
 
 from app.strategy_builder.core.domain.protocols import ConfigurationManager, ValidationService
+from app.utils.config import YamlConfigurationManager
 
-
-class YamlConfigurationManager:
-    """YAML-based configuration manager."""
-    
-    def load_schema(self, path: str) -> Dict[str, Any]:
-        """Load validation schema from YAML file."""
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                return yaml.safe_load(f)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Schema file not found: {path}")
-        except yaml.YAMLError as e:
-            raise ValueError(f"Invalid YAML in schema file {path}: {e}")
-    
-    def load_config(self, path: str) -> Dict[str, Any]:
-        """Load configuration from YAML file."""
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                return yaml.safe_load(f)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Config file not found: {path}")
-        except yaml.YAMLError as e:
-            raise ValueError(f"Invalid YAML in config file {path}: {e}")
 
 
 class JsonSchemaValidationService:
