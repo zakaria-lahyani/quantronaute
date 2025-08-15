@@ -1,6 +1,7 @@
 import pandas as pd
 
 from app.clients.mt5.client import MT5Client
+from app.strategy_builder.core.domain.enums import TimeFrameEnum
 
 
 def fetch_historical_data(client: MT5Client, symbol:str, timeframe:str, date_today:str, start_date:str, end_date:str):
@@ -30,3 +31,37 @@ def fetch_historical_data(client: MT5Client, symbol:str, timeframe:str, date_tod
         df = df[df["time"] != max_time]
 
     return df
+
+
+def get_stream_data(client: MT5Client, symbol:str, timeframe:str, nbr_bars:int=3):
+    # Find the corresponding TimeFrameEnum by value and get its name
+    tf_name = None
+    for tf in TimeFrameEnum:
+        if tf.value == timeframe:
+            tf_name = tf.name
+            break
+    
+    if not tf_name:
+        raise ValueError(f"Invalid timeframe value: {timeframe}")
+    
+    data = client.data.fetch_bars(symbol, timeframe=tf_name, num_bars=nbr_bars)
+    # Convert list of HistoricalBar objects to list of dictionaries
+    bars_dict = [bar.model_dump() for bar in data]
+    # Handle empty dataframe case
+    df = pd.DataFrame(bars_dict)
+
+    if df.empty:
+        return df
+
+    df["time"] = pd.to_datetime(df["time"])
+
+    return df
+
+
+def has_new_candle(current_df: pd.DataFrame, last_known_bar, candle_index):
+    """Check if a new candle has closed."""
+    if last_known_bar is None:
+        return True  # Initial fetch
+    current_latest_time = pd.to_datetime(current_df.iloc[-candle_index]["time"])
+    last_known_time = pd.to_datetime(last_known_bar["time"])
+    return current_latest_time > last_known_time

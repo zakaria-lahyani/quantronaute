@@ -1,5 +1,5 @@
 from app.clients.mt5.client import create_client_with_retry
-from app.data_source import fetch_historical_data
+from app.data_source import fetch_historical_data, get_stream_data, has_new_candle
 from app.indicators.indicator_processor import IndicatorProcessor
 from app.strategy_builder.core.domain.enums import TimeFrameEnum
 from app.strategy_builder.factory import StrategyEngineFactory
@@ -21,7 +21,6 @@ HISTORY_DAYS_LOOKUP = {
     "240": 15
 }
 
-
 # -----------------------------
 # LOAD CONFIGURATION
 # -----------------------------
@@ -29,7 +28,6 @@ ROOT_DIR = Path(__file__).parent.parent
 dotenv_path = os.path.join(ROOT_DIR, ".env")
 configuration = LoadEnvironmentVariables(dotenv_path)
 date_helper = DateHelper()
-
 
 # -----------------------------
 # LOAD STRATEGIES
@@ -44,7 +42,6 @@ strategies = {
     name: engine.get_strategy_info(name)
     for name in engine.list_available_strategies()
 }
-
 
 # -----------------------------
 # CREATE CLIENT
@@ -74,22 +71,37 @@ historicals = {
     for tf in TimeFrameEnum
     if tf.value in indicator_configs  # Only fetch data for timeframes with indicator configs
 }
-
-print(historicals.keys())
+last_known_bars = {tf: None for tf in historicals.keys()}
 
 # -----------------------------
 # WARMUP INDICATORs
 # -----------------------------
 indicators = IndicatorProcessor(configs=indicator_configs, historicals=historicals, is_bulk=True)
-for tf, _ in historicals.items():
-    try:
-        df_result = indicators.get_historical_indicator_data(tf)
-        path = rf"C:\Users\zak\Desktop\workspace\datalake\gold\xauusd\quantronaute\xauusd_{tf}.parquet"
-        df_result.to_parquet(path)
-    except Exception as e:
-        raise
+
+# for tf, _ in historicals.items():
+#     try:
+#         df_result = indicators.get_historical_indicator_data(tf)
+#         path = rf"C:\Users\zak\Desktop\workspace\datalake\gold\xauusd\quantronaute\xauusd_{tf}.parquet"
+#         df_result.to_parquet(path)
+#     except Exception as e:
+#         raise
+
+candle_index = 2
 
 
+for x in range(0, 10):
+    for tf, _ in historicals.items():
+        df = get_stream_data(client, configuration.SYMBOL, tf, nbr_bars=2)
+
+        if has_new_candle(df, last_known_bars[tf], candle_index):
+            last_known_bars[tf] = df.iloc[-candle_index]  # Save the closed one
+
+            # compute indicator
+            indicators.process_new_row(tf, df.iloc[-candle_index])
+
+            print(indicators.get_latest_row(tf))
+        else:
+            print(f"[{tf}] No new closed candle yet.")
 
 #
 # # Load strategies from configuration
