@@ -61,6 +61,14 @@ indicator_configs = {
     if tf.value in files_by_tf
 }
 
+# i want historical to be something like
+# trade_mode = "live" / trade_mode = "backtest"
+#
+# when the trade_mode == "live" it will use the client to fetch the data directly,
+# when trade mode is backtest, it will read the parquet file from path
+# data_source = Datasource(trade_mode)
+# historicals data_source.get_historical_data()
+
 historicals = {
     tf.value: fetch_historical_data(
         client, configuration.SYMBOL, tf.name,
@@ -90,6 +98,10 @@ candle_index = 2
 
 
 for x in range(0, 10):
+
+    # refactor this too
+    # when trader mode is live,
+    # then run the get stream data to use client stream
     for tf, _ in historicals.items():
         df = get_stream_data(client, configuration.SYMBOL, tf, nbr_bars=2)
 
