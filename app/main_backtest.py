@@ -46,7 +46,7 @@ def load_strategies_configuration(folder_path: str, symbol:str):
     return {
         name: engine.get_strategy_info(name)
         for name in engine.list_available_strategies()
-    }
+    }, engine
 
 
 def main():

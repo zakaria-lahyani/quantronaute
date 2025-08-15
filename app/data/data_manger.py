@@ -51,15 +51,3 @@ class DataSourceManager:
         if self.mode == "backtest" and hasattr(self.data_source, 'reset_index'):
             self.data_source.reset_index(timeframe)
 
-
-def has_new_candle(current_df: pd.DataFrame, last_known_bar, candle_index: int) -> bool:
-    """Check if a new candle has closed"""
-    if last_known_bar is None:
-        return True  # Initial fetch
-
-    if current_df.empty or len(current_df) < candle_index:
-        return False
-
-    current_latest_time = pd.to_datetime(current_df.iloc[-candle_index]["time"])
-    last_known_time = pd.to_datetime(last_known_bar["time"])
-    return current_latest_time > last_known_time

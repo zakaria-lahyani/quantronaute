@@ -184,18 +184,14 @@ class IndicatorProcessor:
             # Step 1: Compute indicators
             row_with_indicators = self.compute_indicators(timeframe, row)
 
-            # Step 2: Store the processed row
-            self._recent_rows_manager.add_or_update_row(
+            # Step 2: Process the row with previous values and store it
+            # This will add previous_* columns from the last stored row
+            processed_row = self._recent_rows_manager.process_backtest_with_indicators_row(
                 timeframe, row_with_indicators
             )
 
-            # Step 3: Return the stored row (may differ from computed due to storage logic)
-            stored_row = self._recent_rows_manager.get_latest_row(timeframe)
-
-            if stored_row is None:
-                raise RuntimeError(f"Failed to store row for timeframe {timeframe}")
-
-            return stored_row
+            # Step 3: Return the processed row with previous values
+            return processed_row
 
         except Exception as e:
             self._logger.error(f"Failed to process new row for timeframe {timeframe}: {str(e)}")
@@ -242,7 +238,7 @@ class IndicatorProcessor:
         self._logger.debug(f"Successfully processed MTF data for {len(results)} timeframes")
         return results
 
-    def get_recent_rows(self, timeframe: str, min_rows: Optional[int] = None) -> pd.DataFrame:
+    def get_recent_rows(self) -> pd.DataFrame:
         """
         Get recent processed rows for a specific timeframe.
 
@@ -261,15 +257,9 @@ class IndicatorProcessor:
             ValueError: If timeframe is not supported or insufficient data
 
         """
-        self._validate_timeframe(timeframe)
+        # self._validate_timeframe(timeframe)
 
-        df = self._recent_rows_manager.get_all_rows(timeframe)
-
-        if min_rows is not None and len(df) < min_rows:
-            raise ValueError(
-                f"Insufficient data for timeframe {timeframe}: "
-                f"got {len(df)} rows, need {min_rows}"
-            )
+        df = self._recent_rows_manager.get_recent_rows()
 
         return df
 
@@ -457,7 +447,7 @@ class IndicatorProcessor:
         """Initialize historical data in recent rows manager."""
         try:
             self._historical_initializer.initialize_from_historical(self._managers)
-            self._logger.debug("Historical data initialization completed")
+            self._logger.info("Historical data initialization completed")
         except Exception as e:
             self._logger.error(f"Failed to initialize historical data: {str(e)}")
             raise

@@ -270,6 +270,9 @@ class RecentRowsProcessor:
 
     # Private helper methods
 
+    def get_recent_rows(self):
+        return self._recent_rows
+
     def _validate_initialization_params(self, timeframes: List[str], max_rows: int) -> None:
         """Validate initialization parameters."""
         if not timeframes:
