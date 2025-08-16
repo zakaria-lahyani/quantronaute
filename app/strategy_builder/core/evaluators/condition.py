@@ -46,6 +46,26 @@ class ConditionEvaluator(ConditionEvaluatorInterface):
         
         row = self.recent_rows[tf][-1]
         
+        # Log time and row info for debugging
+        time_value = row.get('time', 'N/A')
+        self.logger.info(f"ConditionEvaluator: Evaluating tf={tf}, time={time_value}")
+        self.logger.info(f"ConditionEvaluator: Row data type: {type(row)}, length: {len(row) if hasattr(row, '__len__') else 'N/A'}")
+        
+        # Check for duplicate columns
+        if hasattr(row, 'index'):
+            duplicates = row.index.duplicated()
+            if duplicates.any():
+                dup_cols = row.index[duplicates].tolist()
+                self.logger.warning(f"ConditionEvaluator: Found duplicate columns: {dup_cols}")
+                
+        # Log some key columns to see their types and values
+        for col in ['close', 'previous_close']:
+            if col in row:
+                val = row[col]
+                self.logger.info(f"ConditionEvaluator: {col} = {val} (type: {type(val)})")
+                if hasattr(val, '__len__') and not isinstance(val, str):
+                    self.logger.info(f"ConditionEvaluator: {col} is array-like with shape: {getattr(val, 'shape', len(val))}")
+        
         # Get current signal value
         current_signal = row.get(condition.signal)
         if current_signal is None:
@@ -53,6 +73,11 @@ class ConditionEvaluator(ConditionEvaluatorInterface):
                 f"ConditionEvaluator: {condition.signal} is None"
             )
             return False
+        
+        # Ensure current_signal is a scalar value
+        if hasattr(current_signal, '__len__') and not isinstance(current_signal, str):
+            self.logger.warning(f"ConditionEvaluator: {condition.signal} is array-like: {current_signal}, taking first value")
+            current_signal = current_signal.iloc[0] if hasattr(current_signal, 'iloc') else current_signal[0]
         
         # Check if we need previous signal (only for certain operators)
         needs_previous = condition.operator in [
@@ -70,24 +95,52 @@ class ConditionEvaluator(ConditionEvaluatorInterface):
                 )
                 return False
             
+            # Ensure previous_signal is a scalar value
+            if hasattr(previous_signal, '__len__') and not isinstance(previous_signal, str):
+                self.logger.warning(f"ConditionEvaluator: previous_{condition.signal} is array-like: {previous_signal}, taking first value")
+                previous_signal = previous_signal.iloc[0] if hasattr(previous_signal, 'iloc') else previous_signal[0]
+            
             # Handle operators that need previous values
             if condition.operator == ConditionOperatorEnum.CROSSES_ABOVE:
-                return self._crosses(previous_signal, current_signal, row, condition.value, direction="above")
+                result = self._crosses(previous_signal, current_signal, row, condition.value, direction="above")
+                self.logger.info(
+                    f"ConditionEvaluator: CROSSES_ABOVE [{condition.signal}({previous_signal} -> {current_signal}) crosses_above {condition.value}] = {result}"
+                )
+                return result
             
             if condition.operator == ConditionOperatorEnum.CROSSES_BELOW:
-                return self._crosses(previous_signal, current_signal, row, condition.value, direction="below")
+                result = self._crosses(previous_signal, current_signal, row, condition.value, direction="below")
+                self.logger.info(
+                    f"ConditionEvaluator: CROSSES_BELOW [{condition.signal}({previous_signal} -> {current_signal}) crosses_below {condition.value}] = {result}"
+                )
+                return result
             
             if condition.operator == ConditionOperatorEnum.CHANGES_TO:
                 target_value = self._resolve_value(condition.value, row, current_signal)
-                return current_signal == target_value and previous_signal != target_value
+                result = current_signal == target_value and previous_signal != target_value
+                self.logger.info(
+                    f"ConditionEvaluator: CHANGES_TO [{condition.signal}({previous_signal} -> {current_signal}) changes_to {condition.value}({target_value})] = {result}"
+                )
+                return result
             
             if condition.operator == ConditionOperatorEnum.REMAINS:
                 target_value = self._resolve_value(condition.value, row, current_signal)
-                return current_signal == target_value and previous_signal == target_value
+                result = current_signal == target_value and previous_signal == target_value
+                self.logger.info(
+                    f"ConditionEvaluator: REMAINS [{condition.signal}({previous_signal} -> {current_signal}) remains {condition.value}({target_value})] = {result}"
+                )
+                return result
         
         # Handle standard comparison operators (don't need previous values)
         target_value = self._resolve_value(condition.value, row, current_signal)
-        return self._compare(current_signal, condition.operator, target_value)
+        result = self._compare(current_signal, condition.operator, target_value)
+        
+        # Log the evaluation details
+        self.logger.info(
+            f"ConditionEvaluator: [{condition.signal}({current_signal}) {condition.operator.value} {condition.value}({target_value})] = {result}"
+        )
+        
+        return result
     
     def _resolve_value(self, val, row, ref_type: Union[str, float, int]) -> Union[str, float, int]:
         """
@@ -103,6 +156,9 @@ class ConditionEvaluator(ConditionEvaluatorInterface):
         """
         if isinstance(val, str) and val in row:
             resolved = row[val]
+            # Ensure resolved value is scalar
+            if hasattr(resolved, '__len__') and not isinstance(resolved, str):
+                resolved = resolved.iloc[0] if hasattr(resolved, 'iloc') else resolved[0]
         else:
             resolved = val
         

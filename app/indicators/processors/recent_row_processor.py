@@ -356,6 +356,14 @@ class RecentRowsProcessor:
         Returns:
             pd.Series: Combined row with previous data prefixed
         """
+        # Start with a clean copy of current row (remove any existing previous columns)
+        clean_current = pd.Series()
+        for col in current_row.index:
+            if not col.startswith(self.PREVIOUS_PREFIX):
+                clean_current[col] = current_row[col]
+        
+        self._logger.debug(f"Cleaned current row columns: {list(clean_current.index)}")
+        
         # Extract non-previous columns from previous row
         prev_columns = [col for col in previous_row.index
                        if not col.startswith(self.PREVIOUS_PREFIX)]
@@ -363,9 +371,13 @@ class RecentRowsProcessor:
 
         # Add prefix to previous row columns
         prev_prefixed = prev_only.add_prefix(self.PREVIOUS_PREFIX)
+        
+        self._logger.debug(f"Previous row columns to add: {list(prev_prefixed.index)}")
 
-        # Combine current row with prefixed previous row
-        result = pd.concat([current_row, prev_prefixed])
+        # Combine clean current row with prefixed previous row (no overlap possible now)
+        result = pd.concat([clean_current, prev_prefixed])
+        
+        self._logger.debug(f"Final result columns: {len(result)}, duplicates: {result.index.duplicated().any()}")
 
         return result
 
