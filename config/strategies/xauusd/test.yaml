@@ -32,10 +32,8 @@ risk:
     type: percentage
     value: 1.0
   sl:
-    type: trailing
-    step: 0.004
-    activation_price: 0.002
-    cap: 0.03
+    type: monetary
+    value: 500.0
   tp:
     type: multi_target
     targets:

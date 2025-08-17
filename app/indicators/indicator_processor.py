@@ -20,7 +20,7 @@ Architecture:
 - Immutable operations preserving original data
 - Lazy evaluation for performance optimization
 """
-
+from collections import deque
 from typing import Dict, Optional, List
 import pandas as pd
 import logging
@@ -238,7 +238,7 @@ class IndicatorProcessor:
         self._logger.debug(f"Successfully processed MTF data for {len(results)} timeframes")
         return results
 
-    def get_recent_rows(self) -> pd.DataFrame:
+    def get_recent_rows(self) ->  dict[str, deque]:
         """
         Get recent processed rows for a specific timeframe.
 

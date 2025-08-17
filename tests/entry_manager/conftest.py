@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 from unittest.mock import Mock
 
-from app.entry_manager.manager import RiskManager
+from app.entry_manager.manager import EntryManager
 from app.utils.logger import AppLogger
 
 from .fixtures.mock_strategies import (
@@ -60,7 +60,7 @@ def multiple_strategies():
 def basic_risk_manager(basic_strategy, null_logger):
     """Provide a basic RiskManager instance."""
     strategies = {"test": basic_strategy}
-    return RiskManager(
+    return EntryManager(
         strategies=strategies,
         symbol="EURUSD",
         pip_value=10000.0,
@@ -71,7 +71,7 @@ def basic_risk_manager(basic_strategy, null_logger):
 @pytest.fixture
 def multi_strategy_risk_manager(multiple_strategies, null_logger):
     """Provide a RiskManager with multiple strategies."""
-    return RiskManager(
+    return EntryManager(
         strategies=multiple_strategies,
         symbol="EURUSD",
         pip_value=10000.0,

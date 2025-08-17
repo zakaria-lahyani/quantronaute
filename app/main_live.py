@@ -7,7 +7,7 @@ from typing import Optional
 
 from app.clients.mt5.client import create_client_with_retry
 from app.data.data_manger import DataSourceManager
-from app.entry_manager.manager import RiskManager
+from app.entry_manager.manager import EntryManager
 from app.indicators.indicator_processor import IndicatorProcessor
 from app.utils.config import LoadEnvironmentVariables
 from app.utils.date_helper import DateHelper
@@ -32,7 +32,7 @@ def main():
 
     # strategy configuration
     strategies, engine = load_strategies_configuration(folder_path=config.CONF_FOLDER_PATH, symbol=config.SYMBOL)
-    entry_manager = RiskManager(strategies, symbol=config.SYMBOL, pip_value=100.0)
+    entry_manager = EntryManager(strategies, symbol=config.SYMBOL, pip_value=100.0)
 
     # indicator configuration
     indicator_config = load_indicator_configuration(folder_path=config.CONF_FOLDER_PATH, symbol=config.SYMBOL)
@@ -85,11 +85,21 @@ def main():
                     print(last_known_bars["1"])
                     # signal results
                     strateg_result = engine.evaluate(indicators.get_recent_rows())
+                    print(f"Strategy evaluation result: {strateg_result}")
 
-                    print(strateg_result)
-
-                    entry_manager.manage_trades()
-                    print("here goes the the entry manager ! ")
+                    # Convert recent rows to format expected by entry manager
+                    # Entry manager expects dict with lists of dicts, not deques of Series
+                    market_data_for_entry = {}
+                    recent_rows = indicators.get_recent_rows()
+                    for tf, deque_data in recent_rows.items():
+                        if deque_data and len(deque_data) > 0:
+                            # Get the last row and convert to dict
+                            last_row = deque_data[-1]
+                            market_data_for_entry[tf] = [last_row.to_dict() if hasattr(last_row, 'to_dict') else dict(last_row)]
+                    
+                    # Pass the strategies dictionary and formatted market data
+                    trades = entry_manager.manage_trades(strateg_result.strategies, market_data_for_entry, 100000 )
+                    print(f"Trade result: {trades}")
                     print("here goes the the trade manager ! ")
                     
                     # Reset error counter on successful iteration

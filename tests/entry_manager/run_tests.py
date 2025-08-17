@@ -127,7 +127,7 @@ def run_smoke_tests() -> int:
     
     try:
         # Import key components to verify they work
-        from app.entry_manager.manager import RiskManager
+        from app.entry_manager.manager import EntryManager
         from app.entry_manager.position_sizing.factory import create_position_sizer
         from app.entry_manager.stop_loss.factory import create_stop_loss_calculator
         from app.entry_manager.take_profit.factory import create_take_profit_calculator

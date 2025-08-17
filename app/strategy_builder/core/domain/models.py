@@ -164,8 +164,17 @@ class IndicatorBasedSlTp(BaseModel):
     trailing: Optional[TrailingStopLoss] = None
 
 
+class MonetaryStopLoss(BaseModel):
+    """Monetary stop loss configuration."""
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["monetary"]
+    value: confloat(gt=0)  # Dollar amount to risk
+    trailing: Optional[bool] = False
+
+
 StopLoss = Annotated[
-    Union[FixedStopLoss, TrailingStopLossOnly, IndicatorBasedSlTp],
+    Union[FixedStopLoss, TrailingStopLossOnly, IndicatorBasedSlTp, MonetaryStopLoss],
     Field(discriminator="type")
 ]
 

@@ -6,7 +6,7 @@ import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch, MagicMock
 
-from app.entry_manager.manager import RiskManager
+from app.entry_manager.manager import EntryManager
 from app.entry_manager.core.exceptions import ValidationError, CalculationError
 from app.strategy_builder.core.domain.enums import TimeFrameEnum
 from app.strategy_builder.data.dtos import EntryDecision, ExitDecision, Trades
@@ -37,7 +37,7 @@ class TestRiskManagerInit:
         strategy = create_basic_strategy()
         strategies = {"test": strategy}
         
-        manager = RiskManager(
+        manager = EntryManager(
             strategies=strategies,
             symbol="EURUSD",
             pip_value=10000.0
@@ -53,7 +53,7 @@ class TestRiskManagerInit:
         strategies = {"test": strategy}
         
         with pytest.raises(ValidationError) as exc_info:
-            RiskManager(
+            EntryManager(
                 strategies=strategies,
                 symbol="EURUSD",
                 pip_value=0
@@ -61,7 +61,7 @@ class TestRiskManagerInit:
         assert "pip_value must be positive" in str(exc_info.value)
         
         with pytest.raises(ValidationError):
-            RiskManager(
+            EntryManager(
                 strategies=strategies,
                 symbol="EURUSD",
                 pip_value=-10000.0
@@ -75,7 +75,7 @@ class TestRiskManagerInit:
         strategies = {"test": strategy}
         
         with pytest.raises(ValidationError) as exc_info:
-            RiskManager(
+            EntryManager(
                 strategies=strategies,
                 symbol="EURUSD",
                 pip_value=10000.0
@@ -91,7 +91,7 @@ class TestRiskManagerInit:
         strategies = {"test": strategy}
         
         with pytest.raises(ValidationError) as exc_info:
-            RiskManager(
+            EntryManager(
                 strategies=strategies,
                 symbol="EURUSD",
                 pip_value=10000.0
@@ -107,7 +107,7 @@ class TestRiskManagerInit:
         strategies = {"test": strategy}
         
         with pytest.raises(ValidationError) as exc_info:
-            RiskManager(
+            EntryManager(
                 strategies=strategies,
                 symbol="EURUSD",
                 pip_value=10000.0
@@ -120,7 +120,7 @@ class TestRiskManagerInit:
         strategies = {"test": strategy}
         custom_logger = Mock()
         
-        manager = RiskManager(
+        manager = EntryManager(
             strategies=strategies,
             symbol="EURUSD",
             pip_value=10000.0,
@@ -137,7 +137,7 @@ class TestCalculateEntryDecision:
     def manager(self):
         """Create a RiskManager for testing."""
         strategies = create_multiple_strategies()
-        return RiskManager(
+        return EntryManager(
             strategies=strategies,
             symbol="EURUSD",
             pip_value=10000.0
@@ -188,7 +188,7 @@ class TestCalculateEntryDecision:
         """Test entry decision with ATR distance creates limit order."""
         strategy = create_volatility_strategy(atr_distance=0.002)
         strategies = {"volatility": strategy}
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         market_data = create_market_data_simple(current_price=1.1000, atr_value=0.001)
         
@@ -240,7 +240,7 @@ class TestCalculateExitDecision:
         """Create a RiskManager for testing."""
         strategy = create_basic_strategy()
         strategies = {"test": strategy}
-        return RiskManager(strategies, "EURUSD", 10000.0)
+        return EntryManager(strategies, "EURUSD", 10000.0)
     
     def test_calculate_exit_long(self, manager):
         """Test calculating exit decision for long position."""
@@ -289,7 +289,7 @@ class TestManageTrades:
     def manager(self):
         """Create a RiskManager for testing."""
         strategies = create_multiple_strategies()
-        return RiskManager(strategies, "EURUSD", 10000.0)
+        return EntryManager(strategies, "EURUSD", 10000.0)
     
     def test_manage_trades_with_entries(self, manager):
         """Test managing trades with entry signals."""
@@ -414,7 +414,7 @@ class TestExtractCurrentPrice:
         """Create a RiskManager for testing."""
         strategy = create_basic_strategy()
         strategies = {"test": strategy}
-        return RiskManager(strategies, "EURUSD", 10000.0)
+        return EntryManager(strategies, "EURUSD", 10000.0)
     
     def test_extract_price_from_timeframe(self, manager):
         """Test extracting price from specific timeframe."""
@@ -465,7 +465,7 @@ class TestGetStrategyRiskSummary:
             "volatility": create_volatility_strategy(),
             "multi_target": create_multi_target_strategy()
         }
-        return RiskManager(strategies, "EURUSD", 10000.0)
+        return EntryManager(strategies, "EURUSD", 10000.0)
     
     def test_get_basic_strategy_summary(self, manager):
         """Test getting summary for basic strategy."""

@@ -87,7 +87,7 @@ class TakeProfitCalculatorInterface(ABC):
         pass
 
 
-class RiskManagerInterface(ABC):
+class EntryManagerInterface(ABC):
     """Interface for the main risk manager."""
     
     @abstractmethod

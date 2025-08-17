@@ -57,24 +57,24 @@ entry_manager/
 The `RiskManager` class coordinates all risk management activities:
 
 ```python
-from app.entry_manager.manager import RiskManager
+from app.entry_manager.manager import EntryManager
 
 # Initialize with strategies
-manager = RiskManager(
-    strategies=strategy_dict,
-    symbol="EURUSD",
-    pip_value=10000.0
+manager = EntryManager(
+  strategies=strategy_dict,
+  symbol="EURUSD",
+  pip_value=10000.0
 )
 
 # Calculate entry decision
 entry = manager.calculate_entry_decision(
-    strategy_name="my_strategy",
-    symbol="EURUSD",
-    direction="long",
-    entry_price=1.1000,
-    decision_time=datetime.now(),
-    market_data=market_data,
-    account_balance=10000.0
+  strategy_name="my_strategy",
+  symbol="EURUSD",
+  direction="long",
+  entry_price=1.1000,
+  decision_time=datetime.now(),
+  market_data=market_data,
+  account_balance=10000.0
 )
 ```
 
@@ -323,13 +323,13 @@ The central `RiskManager` class orchestrates all components:
 ### Initialization
 
 ```python
-from app.entry_manager.manager import RiskManager
+from app.entry_manager.manager import EntryManager
 
-manager = RiskManager(
-    strategies=strategy_dictionary,
-    symbol="EURUSD",
-    pip_value=10000.0,  # Pip value for the symbol
-    logger=custom_logger  # Optional custom logger
+manager = EntryManager(
+  strategies=strategy_dictionary,
+  symbol="EURUSD",
+  pip_value=10000.0,  # Pip value for the symbol
+  logger=custom_logger  # Optional custom logger
 )
 ```
 
@@ -413,45 +413,45 @@ trades = manager.manage_trades(
 
 ```python
 from app.strategy_builder.core.domain.models import (
-    TradingStrategy, RiskManagement, PositionSizing, 
-    FixedStopLoss, FixedTakeProfit
+  TradingStrategy, RiskManagement, PositionSizing,
+  FixedStopLoss, FixedTakeProfit
 )
 from app.strategy_builder.core.domain.enums import PositionSizingTypeEnum
-from app.entry_manager.manager import RiskManager
+from app.entry_manager.manager import EntryManager
 
 # Define strategy
 strategy = TradingStrategy(
-    name="Conservative EURUSD",
-    timeframes=[TimeFrameEnum.H1],
-    entry=entry_rules,  # Your entry logic
-    risk=RiskManagement(
-        position_sizing=PositionSizing(
-            type=PositionSizingTypeEnum.FIXED,
-            value=500.0  # $500 per trade
-        ),
-        sl=FixedStopLoss(
-            type="fixed", 
-            value=30.0  # 30 pip stop loss
-        ),
-        tp=FixedTakeProfit(
-            type="fixed",
-            value=90.0  # 90 pip take profit (3:1 R/R)
-        )
+  name="Conservative EURUSD",
+  timeframes=[TimeFrameEnum.H1],
+  entry=entry_rules,  # Your entry logic
+  risk=RiskManagement(
+    position_sizing=PositionSizing(
+      type=PositionSizingTypeEnum.FIXED,
+      value=500.0  # $500 per trade
+    ),
+    sl=FixedStopLoss(
+      type="fixed",
+      value=30.0  # 30 pip stop loss
+    ),
+    tp=FixedTakeProfit(
+      type="fixed",
+      value=90.0  # 90 pip take profit (3:1 R/R)
     )
+  )
 )
 
 # Initialize risk manager
 strategies = {"conservative": strategy}
-manager = RiskManager(strategies, "EURUSD", 10000.0)
+manager = EntryManager(strategies, "EURUSD", 10000.0)
 
 # Generate entry decision
 entry = manager.calculate_entry_decision(
-    strategy_name="conservative",
-    symbol="EURUSD",
-    direction="long", 
-    entry_price=1.1000,
-    decision_time=datetime.now(),
-    market_data=market_data
+  strategy_name="conservative",
+  symbol="EURUSD",
+  direction="long",
+  entry_price=1.1000,
+  decision_time=datetime.now(),
+  market_data=market_data
 )
 
 # Result: 

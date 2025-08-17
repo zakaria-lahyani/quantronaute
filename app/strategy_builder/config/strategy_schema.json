@@ -432,6 +432,14 @@
             "cap": { "type": "number" }
           },
           "required": ["type", "step"]
+        },
+        {
+          "properties": {
+            "type": { "const": "monetary" },
+            "value": { "type": "number", "minimum": 0.01 },
+            "trailing": { "type": "boolean", "default": false }
+          },
+          "required": ["type", "value"]
         }
       ]
     },

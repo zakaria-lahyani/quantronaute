@@ -7,11 +7,12 @@ import logging
 
 from ..core.interfaces import StopLossCalculatorInterface
 from ..core.exceptions import UnsupportedConfigurationError
-from ...strategy_builder.core.domain.models import FixedStopLoss, IndicatorBasedSlTp, TrailingStopLossOnly
+from ...strategy_builder.core.domain.models import FixedStopLoss, IndicatorBasedSlTp, TrailingStopLossOnly, MonetaryStopLoss
 
 from .fixed import FixedStopLossCalculator
 from .indicator import IndicatorStopLossCalculator
 from .trailing import TrailingStopLossCalculator
+from .monetary import MonetaryStopLossCalculator
 
 
 class StopLossCalculatorFactory:
@@ -21,12 +22,13 @@ class StopLossCalculatorFactory:
         "fixed": FixedStopLossCalculator,
         "indicator": IndicatorStopLossCalculator,
         "trailing": TrailingStopLossCalculator,
+        "monetary": MonetaryStopLossCalculator,
     }
     
     @classmethod
     def create_calculator(
         cls,
-        config: Union[FixedStopLoss, IndicatorBasedSlTp, TrailingStopLossOnly],
+        config: Union[FixedStopLoss, IndicatorBasedSlTp, TrailingStopLossOnly, MonetaryStopLoss],
         pip_value: float,
         logger: Optional[logging.Logger] = None
     ) -> StopLossCalculatorInterface:
@@ -95,6 +97,8 @@ class StopLossCalculatorFactory:
             config = IndicatorBasedSlTp(**config_dict)
         elif stop_type == "trailing":
             config = TrailingStopLossOnly(**config_dict)
+        elif stop_type == "monetary":
+            config = MonetaryStopLoss(**config_dict)
         else:
             raise UnsupportedConfigurationError(
                 f"Unsupported stop loss type: {stop_type}",
@@ -143,7 +147,7 @@ class StopLossCalculatorFactory:
 
 
 def create_stop_loss_calculator(
-    config: Union[FixedStopLoss, IndicatorBasedSlTp, TrailingStopLossOnly, Dict],
+    config: Union[FixedStopLoss, IndicatorBasedSlTp, TrailingStopLossOnly, MonetaryStopLoss, Dict],
     pip_value: float,
     logger: Optional[logging.Logger] = None
 ) -> StopLossCalculatorInterface:

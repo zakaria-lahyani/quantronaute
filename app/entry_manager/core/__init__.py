@@ -6,7 +6,7 @@ from .interfaces import (
     PositionSizerInterface,
     StopLossCalculatorInterface,
     TakeProfitCalculatorInterface,
-    RiskManagerInterface
+    EntryManagerInterface
 )
 
 from .base import (
@@ -29,7 +29,7 @@ __all__ = [
     "PositionSizerInterface",
     "StopLossCalculatorInterface", 
     "TakeProfitCalculatorInterface",
-    "RiskManagerInterface",
+    "EntryManagerInterface",
     
     # Base classes
     "BasePositionSizer",

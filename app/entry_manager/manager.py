@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime
 import logging
 
-from .core.interfaces import RiskManagerInterface
+from .core.interfaces import EntryManagerInterface
 from .core.exceptions import ValidationError, CalculationError
 from .position_sizing.factory import create_position_sizer
 from .stop_loss.factory import create_stop_loss_calculator
@@ -19,7 +19,7 @@ from ..utils.functions_helper import generate_magic_number
 from ..utils.logger import AppLogger
 
 
-class RiskManager(RiskManagerInterface):
+class EntryManager(EntryManagerInterface):
     """
     Main risk manager that coordinates position sizing, stop loss, and take profit calculations.
     """
@@ -129,7 +129,7 @@ class RiskManager(RiskManagerInterface):
             
             # Calculate stop loss
             stop_loss_result = self._calculate_stop_loss(
-                strategy, entry_price, is_long, market_data, **kwargs
+                strategy, entry_price, is_long, market_data, position_size=position_size, **kwargs
             )
             
             # Calculate take profit
@@ -234,7 +234,7 @@ class RiskManager(RiskManagerInterface):
         market_data: Optional[Dict[str, Any]],
         **kwargs
     ) -> float:
-        """Calculate position size using the appropriate sizer."""
+        """Calculate position size in units/lots using the appropriate sizer."""
         if not strategy.risk.position_sizing:
             raise CalculationError(
                 "Strategy must have position sizing configuration",
@@ -248,12 +248,22 @@ class RiskManager(RiskManagerInterface):
         if market_data:
             volatility = market_data.get('ATR') or market_data.get('volatility')
         
-        return sizer.calculate_position_size(
-            entry_price=entry_price,
-            account_balance=account_balance,
-            volatility=volatility,
-            **kwargs
-        )
+        # For percentage and other monetary-based sizing, return units instead of monetary value
+        if hasattr(sizer, 'get_position_units'):
+            return sizer.get_position_units(
+                entry_price=entry_price,
+                account_balance=account_balance,
+                volatility=volatility,
+                **kwargs
+            )
+        else:
+            # Fallback for other sizer types that return units directly
+            return sizer.calculate_position_size(
+                entry_price=entry_price,
+                account_balance=account_balance,
+                volatility=volatility,
+                **kwargs
+            )
     
     def _calculate_stop_loss(
         self,
@@ -261,6 +271,7 @@ class RiskManager(RiskManagerInterface):
         entry_price: float,
         is_long: bool,
         market_data: Optional[Dict[str, Any]],
+        position_size: Optional[float] = None,
         **kwargs
     ):
         """Calculate stop loss using the appropriate calculator."""
@@ -270,6 +281,7 @@ class RiskManager(RiskManagerInterface):
             entry_price=entry_price,
             is_long=is_long,
             market_data=market_data,
+            position_size=position_size,
             **kwargs
         )
     

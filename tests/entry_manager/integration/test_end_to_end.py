@@ -6,7 +6,7 @@ import pytest
 from datetime import datetime, timedelta
 from unittest.mock import Mock
 
-from app.entry_manager.manager import RiskManager
+from app.entry_manager.manager import EntryManager
 from app.strategy_builder.data.dtos import EntryDecision, ExitDecision, Trades
 
 from ..fixtures.mock_strategies import (
@@ -39,7 +39,7 @@ class TestEndToEndScenarios:
             take_profit_value=100.0
         )
         strategies = {"simple_long": strategy}
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         # Create market data
         market_data = create_market_data_simple(current_price=1.1000)
@@ -86,7 +86,7 @@ class TestEndToEndScenarios:
             account_balance=50000.0
         )
         strategies = {"percentage_test": strategy}
-        manager = RiskManager(strategies, "GBPUSD", 10000.0)
+        manager = EntryManager(strategies, "GBPUSD", 10000.0)
         
         market_data = create_market_data_simple(current_price=1.2500)
         
@@ -112,7 +112,7 @@ class TestEndToEndScenarios:
             atr_distance=0.0015  # Creates limit order
         )
         strategies = {"volatility_test": strategy}
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         # High volatility market data
         market_data = create_market_data_volatile(
@@ -142,7 +142,7 @@ class TestEndToEndScenarios:
         """Test multi-target take profit scenario."""
         strategy = create_multi_target_strategy()
         strategies = {"multi_target_test": strategy}
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         market_data = create_market_data_simple(current_price=1.1000)
         
@@ -175,7 +175,7 @@ class TestEndToEndScenarios:
             trail_step=5.0
         )
         strategies = {"trailing_test": strategy}
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         market_data = create_market_data_trending(
             start_price=1.0900,
@@ -199,7 +199,7 @@ class TestEndToEndScenarios:
     def test_multiple_strategies_management(self):
         """Test managing multiple strategies simultaneously."""
         strategies = create_multiple_strategies()
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         market_data = create_multi_timeframe_data()
         
@@ -252,7 +252,7 @@ class TestComplexMarketScenarios:
         """Test behavior during high volatility periods."""
         strategy = create_volatility_strategy(base_size=1000.0)
         strategies = {"vol_strategy": strategy}
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         # Create highly volatile market data
         market_data = create_market_data_volatile(
@@ -281,7 +281,7 @@ class TestComplexMarketScenarios:
         """Test behavior in strong trending market."""
         strategy = create_basic_strategy(position_sizing_value=1500.0)
         strategies = {"trend_strategy": strategy}
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         # Strong uptrend
         market_data = create_market_data_trending(
@@ -314,7 +314,7 @@ class TestComplexMarketScenarios:
             strategy.timeframes[0] for _ in range(3)  # Use same timeframe for simplicity
         ]
         strategies = {"mixed_tf": strategy}
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         # Create data with different prices across timeframes
         market_data = create_multi_timeframe_data(
@@ -344,7 +344,7 @@ class TestErrorHandlingScenarios:
         """Test handling when market data is incomplete."""
         strategy = create_volatility_strategy()
         strategies = {"test_strategy": strategy}
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         # Market data without ATR (required for volatility strategy)
         market_data = {
@@ -371,7 +371,7 @@ class TestErrorHandlingScenarios:
         """Test behavior in extreme market conditions."""
         strategy = create_basic_strategy()
         strategies = {"extreme_test": strategy}
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         # Extreme price movements
         market_data = create_market_data_simple(current_price=2.0000)  # Extreme price
@@ -393,7 +393,7 @@ class TestErrorHandlingScenarios:
     def test_concurrent_strategy_execution(self):
         """Test concurrent execution of multiple strategies."""
         strategies = create_multiple_strategies()
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         market_data = create_market_data_simple()
         decision_time = datetime.now()
@@ -442,7 +442,7 @@ class TestPerformanceScenarios:
                 take_profit_value=100.0 + i * 10
             )
         
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         market_data = create_market_data_simple()
         
         # Test entry calculation for all strategies
@@ -476,7 +476,7 @@ class TestPerformanceScenarios:
         """Test with complex multi-timeframe market data."""
         strategy = create_basic_strategy()
         strategies = {"complex_test": strategy}
-        manager = RiskManager(strategies, "EURUSD", 10000.0)
+        manager = EntryManager(strategies, "EURUSD", 10000.0)
         
         # Create large dataset
         market_data = create_multi_timeframe_data()

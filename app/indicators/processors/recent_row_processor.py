@@ -270,7 +270,7 @@ class RecentRowsProcessor:
 
     # Private helper methods
 
-    def get_recent_rows(self):
+    def get_recent_rows(self) ->  dict[str, deque]:
         return self._recent_rows
 
     def _validate_initialization_params(self, timeframes: List[str], max_rows: int) -> None:

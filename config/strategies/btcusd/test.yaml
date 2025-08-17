@@ -28,20 +28,18 @@ entry:
 
 
 risk:
-  position_sizing:
-    type: percentage
-    value: 1.0
-  sl:
-    type: trailing
-    step: 0.004
-    activation_price: 0.002
-    cap: 0.03
-  tp:
-    type: multi_target
-    targets:
-      - value: 1.0
-        percent: 60
-        move_stop: true
-      - value: 2.0
-        percent: 40
-        move_stop: false
+    position_sizing:
+      type: percentage
+      value: 20.0
+    sl:
+      type: monetary
+      value: 500.0
+    tp:
+        type: multi_target
+        targets:
+          - value: 5.0        # 5% profit target
+            percent: 80       # Close 80% of position
+            move_stop: true   # Move stop to breakeven
+          - value: 15.0       # 15% profit target
+            percent: 20       # Keep 20% for big move
+            move_stop: false
