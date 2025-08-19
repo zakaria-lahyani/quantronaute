@@ -41,6 +41,10 @@ class LoadEnvironmentVariables:
         self.TRADE_MODE = ""
         self.BACKTEST_DATA_PATH = ""
 
+        self.POSITION_SPLIT = 0
+        self.SCALING_TYPE = ""
+        self.ENTRY_SPACING = 0
+        self.RISK_PER_GROUP = 0
         self._load_env_variables()
 
     def _load_env_variables(self):
@@ -58,3 +62,7 @@ class LoadEnvironmentVariables:
         self.TRADE_MODE = os.getenv('TRADE_MODE')
         self.BACKTEST_DATA_PATH = os.getenv('BACKTEST_DATA_PATH')
 
+        self.POSITION_SPLIT = int(os.getenv('POSITION_SPLIT'))
+        self.SCALING_TYPE = os.getenv('SCALING_TYPE')
+        self.ENTRY_SPACING = float(os.getenv('ENTRY_SPACING'))
+        self.RISK_PER_GROUP = float(os.getenv('RISK_PER_GROUP'))

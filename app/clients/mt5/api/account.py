@@ -22,7 +22,7 @@ class AccountClient(BaseClient):
         """
         return self.get("account")
 
-    def get_balance(self) -> Dict[str, float]:
+    def get_balance(self) -> float:
         """
         Get account balance.
 
@@ -32,7 +32,8 @@ class AccountClient(BaseClient):
         Raises:
             MT5APIError: If balance cannot be retrieved
         """
-        return self.get("account/balance")
+        account_balance = self.get("account/balance")
+        return account_balance["balance"]
 
     def get_equity(self) -> Dict[str, float]:
         """

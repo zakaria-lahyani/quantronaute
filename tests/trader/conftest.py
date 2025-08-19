@@ -12,7 +12,7 @@ from unittest.mock import Mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from app.trader.models import ScalingConfig, ScaledPosition, PositionGroup
-from app.trader.risk_manager import RiskManager
+from app.trader.risk_calculator import RiskCalculator
 from app.trader.stop_loss_calculator import MonetaryStopLossCalculator, PositionEntry
 from app.strategy_builder.data.dtos import EntryDecision, StopLossResult, TakeProfitResult, TPLevel
 
@@ -54,13 +54,13 @@ def scaling_config_custom():
 @pytest.fixture
 def risk_manager_equal(scaling_config_equal):
     """Create RiskManager with equal scaling."""
-    return RiskManager(scaling_config_equal)
+    return RiskCalculator(scaling_config_equal)
 
 
 @pytest.fixture
 def risk_manager_no_group_stop(scaling_config_equal):
     """Create RiskManager with individual stops."""
-    return RiskManager(scaling_config_equal, group_stop_loss=False)
+    return RiskCalculator(scaling_config_equal, group_stop_loss=False)
 
 
 @pytest.fixture

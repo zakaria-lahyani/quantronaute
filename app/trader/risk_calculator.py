@@ -7,7 +7,7 @@ import logging
 import uuid
 
 
-class RiskManager:
+class RiskCalculator:
     """
     1. Takes entry decision and splits into multiple limit orders
     2. Sends all orders at once

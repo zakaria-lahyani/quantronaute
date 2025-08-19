@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from app.strategy_builder.data.dtos import EntryDecision, StopLossResult, TakeProfitResult, TPLevel
 from app.trader.models import ScalingConfig
-from app.trader.risk_manager import RiskManager
+from app.trader.risk_calculator import RiskCalculator
 
 scaling_config = ScalingConfig(
     num_entries=4,  # Split into 4 positions
@@ -16,7 +16,7 @@ scaling_config = ScalingConfig(
 )
 
 # 2. Create trader_claude
-trader = RiskManager(scaling_config )
+trader = RiskCalculator(scaling_config)
 
 # 3. Example entry decision (from your entry_manager.manage_trades)
 entry_decision = EntryDecision(

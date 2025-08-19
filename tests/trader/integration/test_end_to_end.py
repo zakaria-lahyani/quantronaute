@@ -4,7 +4,7 @@ Integration tests for end-to-end position scaling scenarios.
 
 import pytest
 from datetime import datetime
-from app.trader.risk_manager import RiskManager
+from app.trader.risk_calculator import RiskCalculator
 from app.trader.models import ScalingConfig, TradeState
 from app.trader.stop_loss_calculator import MonetaryStopLossCalculator, PositionEntry
 from app.strategy_builder.data.dtos import EntryDecision, StopLossResult, TakeProfitResult, TPLevel
@@ -23,7 +23,7 @@ class TestEndToEndScaling:
             max_risk_per_group=1000.0
         )
         
-        risk_manager = RiskManager(scaling_config)
+        risk_manager = RiskCalculator(scaling_config)
         
         entry_decision = EntryDecision(
             symbol='XAUUSD',
@@ -111,7 +111,7 @@ class TestEndToEndScaling:
             max_risk_per_group=1500.0
         )
         
-        risk_manager = RiskManager(scaling_config)
+        risk_manager = RiskCalculator(scaling_config)
         
         entry_decision = EntryDecision(
             symbol='BTCUSD',
@@ -157,7 +157,7 @@ class TestEndToEndScaling:
             max_risk_per_group=750.0
         )
         
-        risk_manager = RiskManager(scaling_config)
+        risk_manager = RiskCalculator(scaling_config)
         
         entry_decision = EntryDecision(
             symbol='EURUSD',
@@ -196,7 +196,7 @@ class TestEndToEndScaling:
             max_risk_per_group=500.0
         )
         
-        risk_manager = RiskManager(scaling_config)
+        risk_manager = RiskCalculator(scaling_config)
         
         entry_decision = EntryDecision(
             symbol='XAUUSD',
@@ -255,7 +255,7 @@ class TestEndToEndScaling:
             max_risk_per_group=1000.0
         )
         
-        risk_manager = RiskManager(scaling_config)
+        risk_manager = RiskCalculator(scaling_config)
         
         entry_decision = EntryDecision(
             symbol='XAUUSD',
@@ -287,7 +287,7 @@ class TestEndToEndScaling:
         )
         
         # Create risk manager with individual stops
-        risk_manager = RiskManager(scaling_config, group_stop_loss=False)
+        risk_manager = RiskCalculator(scaling_config, group_stop_loss=False)
         
         entry_decision = EntryDecision(
             symbol='XAUUSD',
@@ -322,7 +322,7 @@ class TestEndToEndScaling:
             max_risk_per_group=500.0
         )
         
-        risk_manager = RiskManager(scaling_config)
+        risk_manager = RiskCalculator(scaling_config)
         
         tp_targets = [
             TPLevel(level=3010.0, value=1.0, percent=60.0, move_stop=True),

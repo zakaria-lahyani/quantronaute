@@ -5,7 +5,7 @@ Unit tests for RiskManager.
 import pytest
 from unittest.mock import Mock, patch
 from datetime import datetime
-from app.trader.risk_manager import RiskManager
+from app.trader.risk_calculator import RiskCalculator
 from app.trader.models import ScalingConfig
 from app.strategy_builder.data.dtos import EntryDecision, StopLossResult, TakeProfitResult, TPLevel
 
@@ -26,7 +26,7 @@ class TestRiskManager:
     @pytest.fixture
     def risk_manager(self, scaling_config):
         """Create a RiskManager instance for testing."""
-        return RiskManager(scaling_config)
+        return RiskCalculator(scaling_config)
     
     @pytest.fixture
     def entry_decision_long(self):
@@ -76,7 +76,7 @@ class TestRiskManager:
     
     def test_initialization(self, scaling_config):
         """Test RiskManager initialization."""
-        rm = RiskManager(scaling_config)
+        rm = RiskCalculator(scaling_config)
         assert rm.scaling_config == scaling_config
         assert rm.group_stop_loss is True
         assert rm.position_groups == {}
@@ -154,7 +154,7 @@ class TestRiskManager:
     
     def test_process_entry_signal_no_group_stop(self, scaling_config, entry_decision_long):
         """Test processing with individual stop losses."""
-        rm = RiskManager(scaling_config, group_stop_loss=False)
+        rm = RiskCalculator(scaling_config, group_stop_loss=False)
         current_price = 3001.0
         
         result = rm.process_entry_signal(entry_decision_long, current_price)
@@ -191,7 +191,7 @@ class TestRiskManager:
             entry_spacing=0.5,
             max_risk_per_group=1000.0
         )
-        rm = RiskManager(config)
+        rm = RiskCalculator(config)
         
         result = rm.process_entry_signal(entry_decision_long, 3000.0)
         
@@ -208,7 +208,7 @@ class TestRiskManager:
             entry_spacing=1.0,
             max_risk_per_group=1000.0
         )
-        rm = RiskManager(config)
+        rm = RiskCalculator(config)
         
         result = rm.process_entry_signal(entry_decision_long, 3000.0)
         

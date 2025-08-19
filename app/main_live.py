@@ -9,6 +9,8 @@ from app.clients.mt5.client import create_client_with_retry
 from app.data.data_manger import DataSourceManager
 from app.entry_manager.manager import EntryManager
 from app.indicators.indicator_processor import IndicatorProcessor
+from app.trader.models import ScalingConfig
+from app.trader.risk_calculator import RiskCalculator
 from app.utils.config import LoadEnvironmentVariables
 from app.utils.date_helper import DateHelper
 
@@ -32,7 +34,15 @@ def main():
 
     # strategy configuration
     strategies, engine = load_strategies_configuration(folder_path=config.CONF_FOLDER_PATH, symbol=config.SYMBOL)
-    entry_manager = EntryManager(strategies, symbol=config.SYMBOL, pip_value=100.0)
+    entry_manager = EntryManager(strategies, symbol=config.SYMBOL, pip_value=config.PIP_VALUE)
+
+    scaling_config = ScalingConfig(
+        num_entries=config.POSITION_SPLIT,
+        scaling_type=config.SCALING_TYPE,
+        entry_spacing=config.ENTRY_SPACING,
+        max_risk_per_group=config.RISK_PER_GROUP
+    )
+    risk_manager = RiskCalculator(scaling_config)
 
     # indicator configuration
     indicator_config = load_indicator_configuration(folder_path=config.CONF_FOLDER_PATH, symbol=config.SYMBOL)
@@ -52,10 +62,12 @@ def main():
     # -----------------------------
     indicators = IndicatorProcessor(configs=indicator_config, historicals=historicals, is_bulk=False)
 
+    account_balance = client.account.get_balance()
+
     # get stream data
     consecutive_errors = 0
     max_consecutive_errors = 5
-    
+
     while True:
         try:
             success_count = 0
@@ -63,7 +75,7 @@ def main():
                 try:
                     df_stream = data_source.get_stream_data(symbol=config.SYMBOL, timeframe=tf, nbr_bars=candle_index)
                     success_count += 1
-                    
+
                     if has_new_candle(df_stream, last_known_bars[tf], candle_index):
                         last_known_bars[tf] = df_stream.iloc[-candle_index]
                         try:
@@ -71,7 +83,7 @@ def main():
                         except Exception as e:
                             logger.error(f"Error processing indicators for {tf}: {e}")
                             continue
-                            
+
                 except Exception as e:
                     logger.warning(f"Error fetching stream data for {tf}: {e}")
                     continue
@@ -85,14 +97,17 @@ def main():
                     strateg_result = engine.evaluate(recent_rows)
                     print(f"Strategy evaluation result: {strateg_result}")
 
-                    # Pass the strategies dictionary and market data directly (now supports deques of Series)
-                    entries = entry_manager.manage_trades(strateg_result.strategies, recent_rows, 100000)
+                    entries = entry_manager.manage_trades(strateg_result.strategies, recent_rows, account_balance)
                     print(f"Trade result: {entries}")
-                    print("here goes the the trade manager ! ")
-                    
+
+                    current_price = last_known_bars["1"]["close"]
+
+                    risk_entries = risk_manager.process_entry_signal(entries.entries[0], current_price)
+                    print(risk_entries)
+
                     # Reset error counter on successful iteration
                     consecutive_errors = 0
-                    
+
                 except Exception as e:
                     logger.error(f"Error in strategy evaluation: {e}")
                     consecutive_errors += 1
@@ -106,18 +121,18 @@ def main():
                 break
 
             time.sleep(5)
-            
+
         except KeyboardInterrupt:
             logger.info("Received keyboard interrupt. Shutting down gracefully...")
             break
         except Exception as e:
             logger.error(f"Unexpected error in main loop: {e}")
             consecutive_errors += 1
-            
+
             if consecutive_errors >= max_consecutive_errors:
                 logger.error(f"Too many consecutive errors ({consecutive_errors}). Exiting...")
                 break
-            
+
             logger.info(f"Continuing after error... (attempt {consecutive_errors}/{max_consecutive_errors})")
             time.sleep(10)  # Wait longer after major errors
 
