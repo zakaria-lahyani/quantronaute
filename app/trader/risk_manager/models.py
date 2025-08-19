@@ -8,7 +8,7 @@ from enum import Enum
 from typing import List, Optional, Dict, Any
 from decimal import Decimal
 
-from ..strategy_builder.data.dtos import EntryDecision, ExitDecision, StopLossResult, TakeProfitResult
+from app.strategy_builder.data.dtos import EntryDecision, ExitDecision, StopLossResult, TakeProfitResult
 
 
 class TradeState(Enum):

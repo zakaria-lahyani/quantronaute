@@ -3,7 +3,7 @@ Unit tests for MonetaryStopLossCalculator.
 """
 
 import pytest
-from app.trader.stop_loss_calculator import MonetaryStopLossCalculator, PositionEntry
+from app.trader.risk_manager.stop_loss_calculator import MonetaryStopLossCalculator, PositionEntry
 
 
 class TestMonetaryStopLossCalculator:

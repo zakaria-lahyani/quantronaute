@@ -4,9 +4,9 @@ Integration tests for end-to-end position scaling scenarios.
 
 import pytest
 from datetime import datetime
-from app.trader.risk_calculator import RiskCalculator
-from app.trader.models import ScalingConfig, TradeState
-from app.trader.stop_loss_calculator import MonetaryStopLossCalculator, PositionEntry
+from app.trader.risk_manager.risk_calculator import RiskCalculator
+from app.trader.risk_manager.models import ScalingConfig, TradeState
+from app.trader.risk_manager.stop_loss_calculator import MonetaryStopLossCalculator, PositionEntry
 from app.strategy_builder.data.dtos import EntryDecision, StopLossResult, TakeProfitResult, TPLevel
 
 

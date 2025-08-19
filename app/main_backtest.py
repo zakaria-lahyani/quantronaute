@@ -35,18 +35,14 @@ def load_indicator_configuration(folder_path: str, symbol:str):
     }
 
 def load_strategies_configuration(folder_path: str, symbol:str):
-    strategy_paths = list_files_in_folder(
-        fr"{folder_path}/strategies/{symbol.lower()}")
+    strategy_paths = list_files_in_folder(fr"{folder_path}/strategies/{symbol.lower()}")
 
     engine = StrategyEngineFactory.create_engine(
         config_paths=strategy_paths,
         logger_name="trading-engine"
     )
 
-    return {
-        name: engine.get_strategy_info(name)
-        for name in engine.list_available_strategies()
-    }, engine
+    return  engine
 
 
 def main():

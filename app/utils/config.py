@@ -59,6 +59,8 @@ class LoadEnvironmentVariables:
         self.SYMBOL = os.getenv('SYMBOL')
         self.CONF_FOLDER_PATH = os.getenv('CONF_FOLDER_PATH')
         self.PIP_VALUE = int(os.getenv('PIP_VALUE'))
+        self.DAILY_LOSS_LIMIT = float(os.getenv('DAILY_LOSS_LIMIT'))
+
         self.TRADE_MODE = os.getenv('TRADE_MODE')
         self.BACKTEST_DATA_PATH = os.getenv('BACKTEST_DATA_PATH')
 

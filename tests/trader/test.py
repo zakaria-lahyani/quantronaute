@@ -5,8 +5,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from app.strategy_builder.data.dtos import EntryDecision, StopLossResult, TakeProfitResult, TPLevel
-from app.trader.models import ScalingConfig
-from app.trader.risk_calculator import RiskCalculator
+from app.trader.risk_manager.models import ScalingConfig
+from app.trader.risk_manager.risk_calculator import RiskCalculator
 
 scaling_config = ScalingConfig(
     num_entries=4,  # Split into 4 positions

@@ -3,10 +3,9 @@ Unit tests for RiskManager.
 """
 
 import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
-from app.trader.risk_calculator import RiskCalculator
-from app.trader.models import ScalingConfig
+from app.trader.risk_manager.risk_calculator import RiskCalculator
+from app.trader.risk_manager.models import ScalingConfig
 from app.strategy_builder.data.dtos import EntryDecision, StopLossResult, TakeProfitResult, TPLevel
 
 

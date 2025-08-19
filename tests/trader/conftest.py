@@ -11,9 +11,9 @@ from unittest.mock import Mock
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from app.trader.models import ScalingConfig, ScaledPosition, PositionGroup
-from app.trader.risk_calculator import RiskCalculator
-from app.trader.stop_loss_calculator import MonetaryStopLossCalculator, PositionEntry
+from app.trader.risk_manager.models import ScalingConfig, ScaledPosition, PositionGroup
+from app.trader.risk_manager.risk_calculator import RiskCalculator
+from app.trader.risk_manager.stop_loss_calculator import MonetaryStopLossCalculator, PositionEntry
 from app.strategy_builder.data.dtos import EntryDecision, StopLossResult, TakeProfitResult, TPLevel
 
 

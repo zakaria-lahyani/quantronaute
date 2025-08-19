@@ -1,8 +1,8 @@
 from typing import Optional, Dict, Any, List
 
 from app.strategy_builder.data.dtos import EntryDecision
-from app.trader.models import ScalingConfig, PositionGroup, ScaledPosition, PositionType
-from app.trader.stop_loss_calculator import MonetaryStopLossCalculator, PositionEntry
+from app.trader.risk_manager.models import ScalingConfig, PositionGroup, ScaledPosition, PositionType
+from app.trader.risk_manager.stop_loss_calculator import MonetaryStopLossCalculator, PositionEntry
 import logging
 import uuid
 

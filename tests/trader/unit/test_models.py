@@ -4,7 +4,7 @@ Unit tests for trader models.
 
 import pytest
 from datetime import datetime
-from app.trader.models import (
+from app.trader.risk_manager.models import (
     ScalingConfig, ScaledPosition, PositionGroup, 
     TradeState, PositionType
 )

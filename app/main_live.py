@@ -3,14 +3,13 @@ import os
 from pathlib import Path
 import time
 import logging
-from typing import Optional
 
 from app.clients.mt5.client import create_client_with_retry
 from app.data.data_manger import DataSourceManager
 from app.entry_manager.manager import EntryManager
 from app.indicators.indicator_processor import IndicatorProcessor
-from app.trader.models import ScalingConfig
-from app.trader.risk_calculator import RiskCalculator
+from app.trader.risk_manager.models import ScalingConfig
+from app.trader.risk_manager.risk_calculator import RiskCalculator
 from app.utils.config import LoadEnvironmentVariables
 from app.utils.date_helper import DateHelper
 
@@ -33,7 +32,11 @@ def main():
     client = create_client_with_retry(config.API_BASE_URL)
 
     # strategy configuration
-    strategies, engine = load_strategies_configuration(folder_path=config.CONF_FOLDER_PATH, symbol=config.SYMBOL)
+    engine = load_strategies_configuration(folder_path=config.CONF_FOLDER_PATH, symbol=config.SYMBOL)
+    strategies = {
+        name: engine.get_strategy_info(name)
+        for name in engine.list_available_strategies()
+    }
     entry_manager = EntryManager(strategies, symbol=config.SYMBOL, pip_value=config.PIP_VALUE)
 
     scaling_config = ScalingConfig(
