@@ -65,10 +65,7 @@ def main():
                     success_count += 1
                     
                     if has_new_candle(df_stream, last_known_bars[tf], candle_index):
-                        print(f"[{tf}] New candle detected!")
-                        print(df_stream)
-                        last_known_bars[tf] = df_stream.iloc[-candle_index]  # Save the closed one
-
+                        last_known_bars[tf] = df_stream.iloc[-candle_index]
                         try:
                             indicators.process_new_row(tf, df_stream.iloc[-candle_index])
                         except Exception as e:
@@ -84,22 +81,13 @@ def main():
                 try:
                     print(last_known_bars["1"])
                     # signal results
-                    strateg_result = engine.evaluate(indicators.get_recent_rows())
+                    recent_rows = indicators.get_recent_rows()
+                    strateg_result = engine.evaluate(recent_rows)
                     print(f"Strategy evaluation result: {strateg_result}")
 
-                    # Convert recent rows to format expected by entry manager
-                    # Entry manager expects dict with lists of dicts, not deques of Series
-                    market_data_for_entry = {}
-                    recent_rows = indicators.get_recent_rows()
-                    for tf, deque_data in recent_rows.items():
-                        if deque_data and len(deque_data) > 0:
-                            # Get the last row and convert to dict
-                            last_row = deque_data[-1]
-                            market_data_for_entry[tf] = [last_row.to_dict() if hasattr(last_row, 'to_dict') else dict(last_row)]
-                    
-                    # Pass the strategies dictionary and formatted market data
-                    trades = entry_manager.manage_trades(strateg_result.strategies, market_data_for_entry, 100000 )
-                    print(f"Trade result: {trades}")
+                    # Pass the strategies dictionary and market data directly (now supports deques of Series)
+                    entries = entry_manager.manage_trades(strateg_result.strategies, recent_rows, 100000)
+                    print(f"Trade result: {entries}")
                     print("here goes the the trade manager ! ")
                     
                     # Reset error counter on successful iteration

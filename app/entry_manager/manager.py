@@ -2,9 +2,11 @@
 Main risk manager implementation that coordinates all risk management components.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
+from collections import deque
 from datetime import datetime
 import logging
+import pandas as pd
 
 from .core.interfaces import EntryManagerInterface
 from .core.exceptions import ValidationError, CalculationError
@@ -87,7 +89,7 @@ class EntryManager(EntryManagerInterface):
         direction: str,
         entry_price: float,
         decision_time: datetime,
-        market_data: Optional[Dict[str, Any]] = None,
+        market_data: Optional[Dict[str, Union[deque, List[Dict[str, Any]]]]] = None,
         account_balance: Optional[float] = None,
         **kwargs
     ) -> EntryDecision:
@@ -100,7 +102,7 @@ class EntryManager(EntryManagerInterface):
             direction: Trade direction ('long' or 'short')
             entry_price: Entry price for the trade
             decision_time: Time of the decision
-            market_data: Current market data
+            market_data: Current market data (deques of Series or lists of dicts)
             account_balance: Available account balance
             **kwargs: Additional parameters
             
@@ -231,7 +233,7 @@ class EntryManager(EntryManagerInterface):
         strategy: TradingStrategy,
         entry_price: float,
         account_balance: Optional[float],
-        market_data: Optional[Dict[str, Any]],
+        market_data: Optional[Dict[str, Union[deque, List[Dict[str, Any]]]]],
         **kwargs
     ) -> float:
         """Calculate position size in units/lots using the appropriate sizer."""
@@ -246,7 +248,24 @@ class EntryManager(EntryManagerInterface):
         # Extract volatility from market data if available
         volatility = None
         if market_data:
-            volatility = market_data.get('ATR') or market_data.get('volatility')
+            # First check if ATR is directly in kwargs or market_data root
+            volatility = kwargs.get('ATR') or market_data.get('ATR') or market_data.get('volatility')
+            
+            # If not found, try to extract from the most recent data point
+            if volatility is None:
+                for tf_data in market_data.values():
+                    if isinstance(tf_data, deque) and tf_data:
+                        last_row = tf_data[-1]
+                        if isinstance(last_row, pd.Series):
+                            volatility = last_row.get('ATR') or last_row.get('volatility')
+                            if volatility is not None:
+                                break
+                    elif isinstance(tf_data, list) and tf_data:
+                        last_bar = tf_data[-1]
+                        if isinstance(last_bar, dict):
+                            volatility = last_bar.get('ATR') or last_bar.get('volatility')
+                            if volatility is not None:
+                                break
         
         # For percentage and other monetary-based sizing, return units instead of monetary value
         if hasattr(sizer, 'get_position_units'):
@@ -270,7 +289,7 @@ class EntryManager(EntryManagerInterface):
         strategy: TradingStrategy,
         entry_price: float,
         is_long: bool,
-        market_data: Optional[Dict[str, Any]],
+        market_data: Optional[Dict[str, Union[deque, List[Dict[str, Any]]]]],
         position_size: Optional[float] = None,
         **kwargs
     ):
@@ -290,7 +309,7 @@ class EntryManager(EntryManagerInterface):
         strategy: TradingStrategy,
         entry_price: float,
         is_long: bool,
-        market_data: Optional[Dict[str, Any]],
+        market_data: Optional[Dict[str, Union[deque, List[Dict[str, Any]]]]],
         **kwargs
     ):
         """Calculate take profit using the appropriate calculator."""
@@ -306,7 +325,7 @@ class EntryManager(EntryManagerInterface):
     def manage_trades(
         self,
         strategy_results: Dict[str, Any],
-        market_data: Dict[str, Any],
+        market_data: Dict[str, Union[deque, List[Dict[str, Any]]]],
         account_balance: Optional[float] = None,
         **kwargs
     ) -> Trades:
@@ -315,7 +334,7 @@ class EntryManager(EntryManagerInterface):
         
         Args:
             strategy_results: Results from strategy evaluation
-            market_data: Current market data
+            market_data: Current market data (can be deques of Series or lists of dicts)
             account_balance: Available account balance
             **kwargs: Additional parameters
             
@@ -330,7 +349,14 @@ class EntryManager(EntryManagerInterface):
         if market_data:
             # Try to get time from market data
             for timeframe_data in market_data.values():
-                if isinstance(timeframe_data, list) and timeframe_data:
+                if isinstance(timeframe_data, deque) and timeframe_data:
+                    # Handle deque of Series (streaming data)
+                    last_row = timeframe_data[-1]
+                    if isinstance(last_row, pd.Series) and 'time' in last_row.index:
+                        decision_time = last_row['time']
+                        break
+                elif isinstance(timeframe_data, list) and timeframe_data:
+                    # Handle list of dicts (legacy format)
                     last_bar = timeframe_data[-1]
                     if isinstance(last_bar, dict) and 'time' in last_bar:
                         decision_time = last_bar['time']
@@ -378,22 +404,33 @@ class EntryManager(EntryManagerInterface):
     
     def _extract_current_price(
         self,
-        market_data: Dict[str, Any],
+        market_data: Dict[str, Union[deque, List[Dict[str, Any]]]],
         timeframe: TimeFrameEnum
     ) -> float:
-        """Extract current price from market data."""
+        """Extract current price from market data (supports both deque and list formats)."""
         tf_key = str(timeframe)
         
         if tf_key in market_data:
             tf_data = market_data[tf_key]
-            if isinstance(tf_data, list) and tf_data:
+            
+            # Handle deque of Series (streaming data)
+            if isinstance(tf_data, deque) and tf_data:
+                last_row = tf_data[-1]
+                if isinstance(last_row, pd.Series) and 'close' in last_row.index:
+                    return float(last_row['close'])
+            # Handle list of dicts (legacy format)
+            elif isinstance(tf_data, list) and tf_data:
                 last_bar = tf_data[-1]
                 if isinstance(last_bar, dict) and 'close' in last_bar:
                     return float(last_bar['close'])
         
         # Fallback: try to find any price data
         for data in market_data.values():
-            if isinstance(data, list) and data:
+            if isinstance(data, deque) and data:
+                last_row = data[-1]
+                if isinstance(last_row, pd.Series) and 'close' in last_row.index:
+                    return float(last_row['close'])
+            elif isinstance(data, list) and data:
                 last_bar = data[-1]
                 if isinstance(last_bar, dict) and 'close' in last_bar:
                     return float(last_bar['close'])
