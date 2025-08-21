@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import  Dict, List, Optional
 
 from app.clients.mt5.base import BaseClient
-from app.clients.mt5.models import HistoricalBar
+from app.clients.mt5.models.response import HistoricalBar
 from app.clients.mt5.utils import validate_symbol, format_datetime, parse_datetime
 
 

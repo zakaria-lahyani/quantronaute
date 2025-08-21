@@ -5,7 +5,7 @@ Positions client for MT5 API.
 from typing import Any, Dict, List, Optional
 
 from app.clients.mt5.base import BaseClient
-from app.clients.mt5.models import (
+from app.clients.mt5.models.response import (
     Position,
     PositionUpdateRequest,
     PositionCloseRequest,
