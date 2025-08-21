@@ -1,5 +1,6 @@
 
 import os
+from collections import deque
 from pathlib import Path
 import time
 import logging
@@ -8,7 +9,8 @@ from app.clients.mt5.client import create_client_with_retry
 from app.data.data_manger import DataSourceManager
 from app.entry_manager.manager import EntryManager
 from app.indicators.indicator_processor import IndicatorProcessor
-from app.trader.risk_manager.models import ScalingConfig
+from app.strategy_builder.data.dtos import Trades, AllStrategiesEvaluationResult
+from app.trader.risk_manager.models import ScalingConfig, RiskEntryResult
 from app.trader.risk_manager.risk_calculator import RiskCalculator
 from app.utils.config import LoadEnvironmentVariables
 from app.utils.date_helper import DateHelper
@@ -96,17 +98,17 @@ def main():
                 try:
                     print(last_known_bars["1"])
                     # signal results
-                    recent_rows = indicators.get_recent_rows()
-                    strateg_result = engine.evaluate(recent_rows)
+                    recent_rows: dict[str, deque] = indicators.get_recent_rows()
+                    strateg_result: AllStrategiesEvaluationResult = engine.evaluate(recent_rows)
                     print(f"Strategy evaluation result: {strateg_result}")
 
-                    entries = entry_manager.manage_trades(strateg_result.strategies, recent_rows, account_balance)
+                    entries: Trades = entry_manager.manage_trades(strateg_result.strategies, recent_rows, account_balance)
                     print(f"Trade result: {entries}")
 
                     current_price = last_known_bars["1"]["close"]
 
-                    risk_entries = risk_manager.process_entry_signal(entries.entries[0], current_price)
-                    print(risk_entries)
+                    risk_entries: RiskEntryResult = risk_manager.process_entry_signal(entries.entries[0], current_price)
+                    print(risk_entries.limit_orders)
 
                     # Reset error counter on successful iteration
                     consecutive_errors = 0

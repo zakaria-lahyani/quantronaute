@@ -207,6 +207,26 @@ class PositionGroup:
 
 
 @dataclass
+class RiskEntryResult:
+    """Result from processing an entry signal with risk management."""
+    
+    group_id: str
+    limit_orders: List[Dict[str, Any]]
+    total_orders: int
+    total_size: float
+    scaled_sizes: List[float]
+    entry_prices: List[float]
+    stop_losses: List[Optional[float]]
+    group_stop_loss: Optional[float]
+    stop_loss_mode: str  # 'group' or 'individual'
+    original_risk: float
+    take_profit: Optional[Any]  # Can be TakeProfitResult or similar
+    calculated_risk: float
+    weighted_avg_entry: Optional[float]
+    stop_calculation_method: str  # 'monetary' or 'price_level'
+
+
+@dataclass
 class ScalingConfig:
     """Configuration for position scaling strategy."""
     

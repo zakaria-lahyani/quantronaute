@@ -1,7 +1,7 @@
 from typing import Optional, Dict, Any, List
 
 from app.strategy_builder.data.dtos import EntryDecision
-from app.trader.risk_manager.models import ScalingConfig, PositionGroup, ScaledPosition, PositionType
+from app.trader.risk_manager.models import ScalingConfig, PositionGroup, ScaledPosition, PositionType, RiskEntryResult
 from app.trader.risk_manager.stop_loss_calculator import MonetaryStopLossCalculator, PositionEntry
 import logging
 import uuid
@@ -68,7 +68,7 @@ class RiskCalculator:
 
     def process_entry_signal(self,
                              entry_decision: "EntryDecision",
-                             current_price: float) -> Dict[str, Any]:
+                             current_price: float) -> RiskEntryResult:
         """
         Orchestrates: group creation, scaling, SL planning, position & order building, result payload.
         """
@@ -122,22 +122,22 @@ class RiskCalculator:
         self.position_groups[group_id] = group
 
         # 6) Shape result
-        result = {
-            'group_id': group_id,
-            'limit_orders': limit_orders,
-            'total_orders': len(limit_orders),
-            'total_size': entry_decision.position_size,
-            'scaled_sizes': scaled_sizes,
-            'entry_prices': entry_prices,
-            'stop_losses': sl_plan.adjusted_stops,
-            'group_stop_loss': sl_plan.group_level if sl_plan.mode == "group" else None,
-            'stop_loss_mode': sl_plan.mode,
-            'original_risk': self.scaling_config.max_risk_per_group,
-            'take_profit': entry_decision.take_profit,
-            'calculated_risk': sl_plan.calculated_risk,
-            'weighted_avg_entry': sl_plan.details.get('weighted_avg_price'),
-            'stop_calculation_method': sl_plan.calculation_method,
-        }
+        result = RiskEntryResult(
+            group_id=group_id,
+            limit_orders=limit_orders,
+            total_orders=len(limit_orders),
+            total_size=entry_decision.position_size,
+            scaled_sizes=scaled_sizes,
+            entry_prices=entry_prices,
+            stop_losses=sl_plan.adjusted_stops,
+            group_stop_loss=sl_plan.group_level if sl_plan.mode == "group" else None,
+            stop_loss_mode=sl_plan.mode,
+            original_risk=self.scaling_config.max_risk_per_group,
+            take_profit=entry_decision.take_profit,
+            calculated_risk=sl_plan.calculated_risk,
+            weighted_avg_entry=sl_plan.details.get('weighted_avg_price'),
+            stop_calculation_method=sl_plan.calculation_method,
+        )
 
         self.logger.info(
             f"[Orders] Created {len(limit_orders)} scaled limit orders for "
