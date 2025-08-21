@@ -96,19 +96,15 @@ def main():
             # Only evaluate strategy if we got data from at least one timeframe
             if success_count > 0:
                 try:
-                    print(last_known_bars["1"])
                     # signal results
                     recent_rows: dict[str, deque] = indicators.get_recent_rows()
                     strateg_result: AllStrategiesEvaluationResult = engine.evaluate(recent_rows)
-                    print(f"Strategy evaluation result: {strateg_result}")
-
                     entries: Trades = entry_manager.manage_trades(strateg_result.strategies, recent_rows, account_balance)
-                    print(f"Trade result: {entries}")
 
                     current_price = last_known_bars["1"]["close"]
-
                     risk_entries: RiskEntryResult = risk_manager.process_entry_signal(entries.entries[0], current_price)
-                    print(risk_entries.limit_orders)
+
+                    print(risk_entries)
 
                     # Reset error counter on successful iteration
                     consecutive_errors = 0

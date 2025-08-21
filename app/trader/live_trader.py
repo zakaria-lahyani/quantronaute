@@ -4,8 +4,9 @@ from app.clients.mt5.client import MT5Client
 from app.clients.mt5.models.history import ClosedPosition
 from app.clients.mt5.models.order import PendingOrder
 from app.clients.mt5.models.position import Position
-from app.strategy_builder.data.dtos import EntryDecision
+
 from app.trader.base_trader import BaseTrader
+from app.trader.risk_manager.models import RiskEntryResult
 
 
 class LiveTrader(BaseTrader):
@@ -20,7 +21,7 @@ class LiveTrader(BaseTrader):
         super()
         self.client = client
 
-    def open_pending_order(self, trade: EntryDecision):
+    def open_pending_order(self, trade: RiskEntryResult):
         # self.client.orders.create_buy_limit_order(
         #     symbol=trade.symbol,
         #     volume=trade.position_size,

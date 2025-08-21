@@ -64,12 +64,13 @@ class FixedPositionSizer(BasePositionSizer):
         Returns:
             Number of units/shares
         """
-        position_size = self.calculate_position_size(entry_price, **kwargs)
-        units = position_size / entry_price
+        # For fixed position sizing, the value already represents lots/units
+        # No need to divide by entry price
+        units = self.calculate_position_size(entry_price, **kwargs)
         
         self.logger.debug(
-            f"Fixed position units: size={position_size}, "
-            f"entry_price={entry_price}, units={units}"
+            f"Fixed position units: {units} lots, "
+            f"entry_price={entry_price}"
         )
         
         return units

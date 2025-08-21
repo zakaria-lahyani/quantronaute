@@ -4,7 +4,7 @@ from typing import Optional
 from app.clients.mt5.models.position import Position
 from app.clients.mt5.models.order import PendingOrder
 from app.clients.mt5.models.history import ClosedPosition
-from app.strategy_builder.data.dtos import EntryDecision
+from app.trader.risk_manager.models import RiskEntryResult
 
 
 class BaseTrader(ABC):
@@ -13,7 +13,7 @@ class BaseTrader(ABC):
     Orders Methodes
     """
     @abstractmethod
-    def open_pending_order(self, trade:EntryDecision):
+    def open_pending_order(self, trade:RiskEntryResult):
         pass
 
     @abstractmethod
