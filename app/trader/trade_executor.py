@@ -1,3 +1,5 @@
+from app.trader.risk_manager.models import ScalingConfig
+from app.trader.risk_manager.risk_calculator import RiskCalculator
 from app.utils.config import LoadEnvironmentVariables
 
 
@@ -6,6 +8,14 @@ class TradeExecutor:
         self.mode = mode
         self.DAILY_LOSS_LIMIT = config.DAILY_LOSS_LIMIT
         self.TRADER_IS_UP = True
+
+        self.scaling_config = ScalingConfig(
+            num_entries=config.POSITION_SPLIT,
+            scaling_type=config.SCALING_TYPE,
+            entry_spacing=config.ENTRY_SPACING,
+            max_risk_per_group=config.RISK_PER_GROUP
+        )
+        self.risk_calculator = RiskCalculator(self.scaling_config)
 
         # self.trade_restriction = TradeRestriction(
         #     restriction_path=config.RESTRICTION_CONF_FOLDER_PATH,

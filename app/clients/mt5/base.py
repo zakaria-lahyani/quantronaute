@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, Union
 import httpx
 
 from .exceptions import MT5APIError, MT5ValidationError
-from .models import APIResponse
+from .models.response import APIResponse
 from .utils import RetryConfig, handle_response_errors, retry_sync
 
 logger = logging.getLogger(__name__)

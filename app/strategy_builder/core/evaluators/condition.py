@@ -48,9 +48,7 @@ class ConditionEvaluator(ConditionEvaluatorInterface):
         
         # Log time and row info for debugging
         time_value = row.get('time', 'N/A')
-        self.logger.info(f"ConditionEvaluator: Evaluating tf={tf}, time={time_value}")
-        self.logger.info(f"ConditionEvaluator: Row data type: {type(row)}, length: {len(row) if hasattr(row, '__len__') else 'N/A'}")
-        
+
         # Check for duplicate columns
         if hasattr(row, 'index'):
             duplicates = row.index.duplicated()
@@ -62,7 +60,6 @@ class ConditionEvaluator(ConditionEvaluatorInterface):
         for col in ['close', 'previous_close']:
             if col in row:
                 val = row[col]
-                self.logger.info(f"ConditionEvaluator: {col} = {val} (type: {type(val)})")
                 if hasattr(val, '__len__') and not isinstance(val, str):
                     self.logger.info(f"ConditionEvaluator: {col} is array-like with shape: {getattr(val, 'shape', len(val))}")
         
@@ -76,7 +73,6 @@ class ConditionEvaluator(ConditionEvaluatorInterface):
         
         # Ensure current_signal is a scalar value
         if hasattr(current_signal, '__len__') and not isinstance(current_signal, str):
-            self.logger.warning(f"ConditionEvaluator: {condition.signal} is array-like: {current_signal}, taking first value")
             current_signal = current_signal.iloc[0] if hasattr(current_signal, 'iloc') else current_signal[0]
         
         # Check if we need previous signal (only for certain operators)
@@ -103,43 +99,26 @@ class ConditionEvaluator(ConditionEvaluatorInterface):
             # Handle operators that need previous values
             if condition.operator == ConditionOperatorEnum.CROSSES_ABOVE:
                 result = self._crosses(previous_signal, current_signal, row, condition.value, direction="above")
-                self.logger.info(
-                    f"ConditionEvaluator: CROSSES_ABOVE [{condition.signal}({previous_signal} -> {current_signal}) crosses_above {condition.value}] = {result}"
-                )
                 return result
             
             if condition.operator == ConditionOperatorEnum.CROSSES_BELOW:
                 result = self._crosses(previous_signal, current_signal, row, condition.value, direction="below")
-                self.logger.info(
-                    f"ConditionEvaluator: CROSSES_BELOW [{condition.signal}({previous_signal} -> {current_signal}) crosses_below {condition.value}] = {result}"
-                )
                 return result
             
             if condition.operator == ConditionOperatorEnum.CHANGES_TO:
                 target_value = self._resolve_value(condition.value, row, current_signal)
                 result = current_signal == target_value and previous_signal != target_value
-                self.logger.info(
-                    f"ConditionEvaluator: CHANGES_TO [{condition.signal}({previous_signal} -> {current_signal}) changes_to {condition.value}({target_value})] = {result}"
-                )
                 return result
             
             if condition.operator == ConditionOperatorEnum.REMAINS:
                 target_value = self._resolve_value(condition.value, row, current_signal)
                 result = current_signal == target_value and previous_signal == target_value
-                self.logger.info(
-                    f"ConditionEvaluator: REMAINS [{condition.signal}({previous_signal} -> {current_signal}) remains {condition.value}({target_value})] = {result}"
-                )
                 return result
         
         # Handle standard comparison operators (don't need previous values)
         target_value = self._resolve_value(condition.value, row, current_signal)
         result = self._compare(current_signal, condition.operator, target_value)
-        
-        # Log the evaluation details
-        self.logger.info(
-            f"ConditionEvaluator: [{condition.signal}({current_signal}) {condition.operator.value} {condition.value}({target_value})] = {result}"
-        )
-        
+
         return result
     
     def _resolve_value(self, val, row, ref_type: Union[str, float, int]) -> Union[str, float, int]:
