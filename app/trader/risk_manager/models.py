@@ -224,6 +224,8 @@ class RiskEntryResult:
     calculated_risk: float
     weighted_avg_entry: Optional[float]
     stop_calculation_method: str  # 'monetary' or 'price_level'
+    strategy_name: Optional[str] = None
+    magic: Optional[int] = None
 
 
 @dataclass

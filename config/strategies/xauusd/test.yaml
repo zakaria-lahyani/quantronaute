@@ -25,7 +25,22 @@ entry:
         value: "previous_close"
         timeframe: "1"
 
+exit:
+  long:
+    mode: all
+    conditions:
+      - signal: "close"
+        operator: "<"
+        value: "previous_close"
+        timeframe: "1"
 
+  short:
+    mode: all
+    conditions:
+      - signal: "close"
+        operator: ">"
+        value: "previous_close"
+        timeframe: "1"
 
 risk:
   position_sizing:

@@ -133,11 +133,15 @@ def build_limit_order(symbol: str,
                       volume: float,
                       price: float,
                       group_sl_level: Optional[float],
-                      use_group_sl: bool) -> Dict[str, Any]:
+                      use_group_sl: bool,
+                      strategy_name: Optional[str] = None,
+                      magic: Optional[int] = None) -> Dict[str, Any]:
     return {
         'symbol': symbol,
         'order_type': 'BUY_LIMIT' if direction.lower() == 'long' else 'SELL_LIMIT',
         'volume': volume,
         'price': price,
-        'group_stop_loss': group_sl_level if use_group_sl else None
+        'group_stop_loss': group_sl_level if use_group_sl else None,
+        'strategy_name': strategy_name,
+        'magic': magic
     }

@@ -8,6 +8,7 @@ from app.clients.mt5.models.position import Position
 
 from app.trader.base_trader import BaseTrader
 from app.trader.risk_manager.models import RiskEntryResult
+from app.utils.functions_helper import generate_magic_number
 
 
 class LiveTrader(BaseTrader):
@@ -38,7 +39,10 @@ class LiveTrader(BaseTrader):
             List of responses from order creation
         """
         results = []
-        
+
+        print(trade)
+        print(trade.limit_orders)
+
         for order in trade.limit_orders:
             try:
                 # Determine order creation method based on order type
@@ -50,7 +54,7 @@ class LiveTrader(BaseTrader):
                         stop_loss=order.get('group_stop_loss'),  # Use group stop loss
                         take_profit=trade.take_profit.level if trade.take_profit else None,
                         comment=f"Group_{trade.group_id[:8]}",
-                        magic=0  # You may want to generate this from strategy
+                        magic=order.get('magic')  # Use the magic number from the order
                     )
                 elif order['order_type'] == 'SELL_LIMIT':
                     result = self.client.orders.create_sell_limit_order(
@@ -60,7 +64,7 @@ class LiveTrader(BaseTrader):
                         stop_loss=order.get('group_stop_loss'),  # Use group stop loss
                         take_profit=trade.take_profit.level if trade.take_profit else None,
                         comment=f"Group_{trade.group_id[:8]}",
-                        magic=0  # You may want to generate this from strategy
+                        magic=order.get('magic')  # Use the magic number from the order
                     )
                 elif order['order_type'] == 'BUY_STOP':
                     result = self.client.orders.create_buy_stop_order(
@@ -70,7 +74,7 @@ class LiveTrader(BaseTrader):
                         stop_loss=order.get('group_stop_loss'),
                         take_profit=trade.take_profit.level if trade.take_profit else None,
                         comment=f"Group_{trade.group_id[:8]}",
-                        magic=0
+                        magic=order.get('magic')  # Use the magic number from the order
                     )
                 elif order['order_type'] == 'SELL_STOP':
                     result = self.client.orders.create_sell_stop_order(
@@ -80,7 +84,7 @@ class LiveTrader(BaseTrader):
                         stop_loss=order.get('group_stop_loss'),
                         take_profit=trade.take_profit.level if trade.take_profit else None,
                         comment=f"Group_{trade.group_id[:8]}",
-                        magic=0
+                        magic=order.get('magic')  # Use the magic number from the order
                     )
                 else:
                     self.logger.warning(f"Unknown order type: {order['order_type']}")
@@ -319,20 +323,6 @@ class LiveTrader(BaseTrader):
         except Exception as e:
             self.logger.error(f"Failed to get closed positions: {e}")
             return []
-
-    def manage_group_stop_loss(self, group_id: str, positions: List[Position]) -> None:
-        """
-        Manage stop loss for a group of related positions.
-        
-        This is a helper method to update stop losses for positions
-        that are part of the same scaling group.
-        
-        Args:
-            group_id: The group identifier
-            positions: List of positions in the group
-        """
-        # This would be implemented based on your specific group management logic
-        pass
 
     def get_account_info(self) -> Dict[str, Any]:
         """

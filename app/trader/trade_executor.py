@@ -30,7 +30,7 @@ class TradeExecutor:
     def manage_exits(self):
         pass
 
-    def open_pending_p(self, entries: list[EntryDecision]):
+    def exec_open_pending_orders(self, entries: list[EntryDecision]):
         current_price = self.trader.get_current_price(self.config.SYMBOL)
 
         if not entries:
@@ -66,9 +66,21 @@ class TradeExecutor:
         entries: list[EntryDecision] = trades.entries
         exits: list[ExitDecision] = trades.exits
 
+        print(entries)
+        print(exits)
+
+        self.exec_open_pending_orders(entries)
+
+        closed_positions = self.trader.get_closed_positions("2025-08-22", "2025-08-24")
+        pending_orders = self.trader.get_pending_orders(self.config.SYMBOL)
+        open_positions = self.trader.get_open_positions(self.config.SYMBOL)
+
+        print( pending_orders )
+        print( open_positions )
+        print( closed_positions )
 
 
-        print(self.open_pending_p(entries) )
+        # print(self.open_pending_p(entries) )
 
             # # Check pending orders
             # pending = self.trader.get_pending_orders(risk_entry.limit_orders[0]['symbol'])

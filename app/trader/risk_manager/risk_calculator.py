@@ -109,7 +109,9 @@ class RiskCalculator:
                 volume=scaled_sizes[i],
                 price=entry_prices[i],
                 group_sl_level=sl_plan.group_level,
-                use_group_sl=(sl_plan.mode == "group")
+                use_group_sl=(sl_plan.mode == "group"),
+                strategy_name=entry_decision.strategy_name,
+                magic=entry_decision.magic
             )
             limit_orders.append(order)
             
@@ -142,6 +144,8 @@ class RiskCalculator:
             calculated_risk=sl_plan.calculated_risk,
             weighted_avg_entry=sl_plan.details.get('weighted_avg_price'),
             stop_calculation_method=sl_plan.calculation_method,
+            strategy_name=entry_decision.strategy_name,
+            magic=entry_decision.magic
         )
 
         self.logger.info(
