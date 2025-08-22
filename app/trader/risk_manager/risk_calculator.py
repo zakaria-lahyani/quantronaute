@@ -112,6 +112,11 @@ class RiskCalculator:
                 use_group_sl=(sl_plan.mode == "group")
             )
             limit_orders.append(order)
+            
+            # Debug logging
+            if i == 0:  # Log only once
+                self.logger.debug(f"Stop loss plan group_level: {sl_plan.group_level}")
+                self.logger.debug(f"Order group_stop_loss: {order.get('group_stop_loss')}")
 
             # track ticket -> group mapping
             self.active_tickets[pos.position_id] = group_id
@@ -144,3 +149,11 @@ class RiskCalculator:
             f"{entry_decision.symbol} {entry_decision.direction} (Group: {group_id[:8]})"
         )
         return result
+
+    def process_entries(self, entries: list[EntryDecision], current_price: float) -> List[RiskEntryResult]:
+        processed_entries = []
+        for entry in entries:
+            processed_ = self.process_entry_signal(entry, current_price)
+            processed_entries.append(processed_)
+
+        return processed_entries

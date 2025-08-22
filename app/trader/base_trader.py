@@ -9,6 +9,10 @@ from app.trader.risk_manager.models import RiskEntryResult
 
 class BaseTrader(ABC):
 
+    @abstractmethod
+    def get_current_price(self, symbol:str):
+        pass
+
     """
     Orders Methodes
     """

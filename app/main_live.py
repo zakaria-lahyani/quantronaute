@@ -12,6 +12,7 @@ from app.indicators.indicator_processor import IndicatorProcessor
 from app.strategy_builder.data.dtos import Trades, AllStrategiesEvaluationResult
 from app.trader.risk_manager.models import ScalingConfig, RiskEntryResult
 from app.trader.risk_manager.risk_calculator import RiskCalculator
+from app.trader.trade_executor import TradeExecutor
 from app.utils.config import LoadEnvironmentVariables
 from app.utils.date_helper import DateHelper
 
@@ -67,6 +68,9 @@ def main():
     # -----------------------------
     indicators = IndicatorProcessor(configs=indicator_config, historicals=historicals, is_bulk=False)
 
+    mode = "live"
+    trade_executor = TradeExecutor(mode, config, client=client)
+
     account_balance = client.account.get_balance()
 
     # get stream data
@@ -101,10 +105,7 @@ def main():
                     strateg_result: AllStrategiesEvaluationResult = engine.evaluate(recent_rows)
                     entries: Trades = entry_manager.manage_trades(strateg_result.strategies, recent_rows, account_balance)
 
-                    current_price = last_known_bars["1"]["close"]
-                    risk_entries: RiskEntryResult = risk_manager.process_entry_signal(entries.entries[0], current_price)
-
-                    print(risk_entries)
+                    trade_executor.manage(entries)
 
                     # Reset error counter on successful iteration
                     consecutive_errors = 0
@@ -135,7 +136,7 @@ def main():
                 break
 
             logger.info(f"Continuing after error... (attempt {consecutive_errors}/{max_consecutive_errors})")
-            time.sleep(10)  # Wait longer after major errors
+            time.sleep(60)
 
 if __name__ == "__main__":
     main()

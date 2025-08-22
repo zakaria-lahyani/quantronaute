@@ -1,4 +1,7 @@
-from app.trader.risk_manager.models import ScalingConfig
+import logging
+from app.strategy_builder.data.dtos import Trades, EntryDecision, ExitDecision
+from app.trader.live_trader import LiveTrader
+from app.trader.risk_manager.models import ScalingConfig, RiskEntryResult
 from app.trader.risk_manager.risk_calculator import RiskCalculator
 from app.utils.config import LoadEnvironmentVariables
 
@@ -8,6 +11,8 @@ class TradeExecutor:
         self.mode = mode
         self.DAILY_LOSS_LIMIT = config.DAILY_LOSS_LIMIT
         self.TRADER_IS_UP = True
+        self.logger = logging.getLogger('trade-executor')
+        self.config = config
 
         self.scaling_config = ScalingConfig(
             num_entries=config.POSITION_SPLIT,
@@ -17,20 +22,58 @@ class TradeExecutor:
         )
         self.risk_calculator = RiskCalculator(self.scaling_config)
 
-        # self.trade_restriction = TradeRestriction(
-        #     restriction_path=config.RESTRICTION_CONF_FOLDER_PATH,
-        #     default_close_time_str=config.DEFAULT_CLOSE_TIME,
-        #     news_duration=config.NEWS_RESTRICTION_DURATION,
-        #     market_close_duration=config.MARKET_CLOSE_RESTRICTION_DURATION
-        # )
-        #
-        # if mode == 'live':
-        #     if 'endpoints' not in kwargs:
-        #         raise ValueError("Live trading requires endpoints")
-        #     self.trader = LiveTrader(kwargs['endpoints'])
-        # elif mode == 'backtest':
-        #     if 'journal_db' not in kwargs:
-        #         raise ValueError("Backtest requires journal_db")
-        #     self.trader = SimTrader( kwargs['journal_db'], kwargs['indicators'])
-        # else:
-        #     raise ValueError(f"Invalid trading mode: {mode}")
+        if mode == 'live':
+            if 'client' not in kwargs:
+                raise ValueError("Live trading requires client")
+            self.trader = LiveTrader(kwargs['client'])
+
+    def manage_exits(self):
+        pass
+
+    def open_pending_p(self, entries: list[EntryDecision]):
+        current_price = self.trader.get_current_price(self.config.SYMBOL)
+
+        if not entries:
+            self.logger.debug("No entry signals to process")
+            return
+
+        risk_entries: list[RiskEntryResult] = self.risk_calculator.process_entries(entries, current_price)
+
+        for risk_entry in risk_entries:
+            self.logger.info(f"Processing risk entry for group {risk_entry.group_id[:8]}")
+            self.logger.info(f"Creating {len(risk_entry.limit_orders)} orders")
+
+            # Open the orders and check results
+            results = self.trader.open_pending_order(trade=risk_entry)
+
+            # Log the results
+            success_count = 0
+            for i, result in enumerate(results):
+                if isinstance(result, dict):
+                    if 'error' in result:
+                        self.logger.error(f"Order {i + 1} failed: {result['error']}")
+                    else:
+                        self.logger.info(f"Order {i + 1} result: {result}")
+                        if result.get('status') == 'success' or result.get('result'):
+                            success_count += 1
+                else:
+                    self.logger.info(f"Order {i + 1} response: {result}")
+
+            self.logger.info(f"Successfully created {success_count}/{len(risk_entry.limit_orders)} orders")
+
+
+    def manage(self, trades: Trades):
+        entries: list[EntryDecision] = trades.entries
+        exits: list[ExitDecision] = trades.exits
+
+
+
+        print(self.open_pending_p(entries) )
+
+            # # Check pending orders
+            # pending = self.trader.get_pending_orders(risk_entry.limit_orders[0]['symbol'])
+            # self.logger.info(f"Current pending orders for {risk_entry.limit_orders[0]['symbol']}: {len(pending)} orders")
+
+        # for trade in trades.entries:
+        #     risk_entries: RiskEntryResult = self.risk_calculator.process_entry_signal(trade, current_price)
+        #     print(risk_entries)
