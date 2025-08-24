@@ -1,4 +1,6 @@
 import logging
+
+from app.clients.mt5.models.response import Position
 from app.strategy_builder.data.dtos import Trades, EntryDecision, ExitDecision
 from app.trader.live_trader import LiveTrader
 from app.trader.risk_manager.models import ScalingConfig, RiskEntryResult
@@ -27,8 +29,15 @@ class TradeExecutor:
                 raise ValueError("Live trading requires client")
             self.trader = LiveTrader(kwargs['client'])
 
-    def manage_exits(self):
-        pass
+    def manage_exits(self, exits: list[ExitDecision], open_positions: list[Position]):
+        for exit_trade in exits:
+            exit_type = 0 if exit_trade.direction == "long" else 1
+            magic = exit_trade.magic
+            symbol = exit_trade.symbol
+            for opened_trade in open_positions:
+                if opened_trade.symbol == symbol and opened_trade.magic == magic and opened_trade.type == exit_type:
+                    self.trader.close_open_position(symbol, opened_trade.ticket)
+
 
     def exec_open_pending_orders(self, entries: list[EntryDecision]):
         current_price = self.trader.get_current_price(self.config.SYMBOL)
