@@ -1,17 +1,20 @@
 import logging
+from datetime import datetime
 
+from app.clients.mt5.models.history import ClosedPosition
 from app.clients.mt5.models.response import Position
 from app.strategy_builder.data.dtos import Trades, EntryDecision, ExitDecision
 from app.trader.live_trader import LiveTrader
 from app.trader.risk_manager.models import ScalingConfig, RiskEntryResult
 from app.trader.risk_manager.risk_calculator import RiskCalculator
+from app.trader.trade_restriction import TradeRestriction
 from app.utils.config import LoadEnvironmentVariables
+from app.utils.date_helper import DateHelper
 
 
 class TradeExecutor:
     def __init__(self, mode: str, config:LoadEnvironmentVariables, **kwargs):
         self.mode = mode
-        self.DAILY_LOSS_LIMIT = config.DAILY_LOSS_LIMIT
         self.TRADER_IS_UP = True
         self.logger = logging.getLogger('trade-executor')
         self.config = config
@@ -23,6 +26,13 @@ class TradeExecutor:
             max_risk_per_group=config.RISK_PER_GROUP
         )
         self.risk_calculator = RiskCalculator(self.scaling_config)
+
+        # self.trade_restriction = TradeRestriction(
+        #     restriction_path=config.RESTRICTION_CONF_FOLDER_PATH,
+        #     default_close_time_str=config.DEFAULT_CLOSE_TIME,
+        #     news_duration=config.NEWS_RESTRICTION_DURATION,
+        #     market_close_duration=config.MARKET_CLOSE_RESTRICTION_DURATION
+        # )
 
         if mode == 'live':
             if 'client' not in kwargs:
@@ -38,6 +48,20 @@ class TradeExecutor:
                 if opened_trade.symbol == symbol and opened_trade.magic == magic and opened_trade.type == exit_type:
                     self.trader.close_open_position(symbol, opened_trade.ticket)
 
+    def _check_catastrophic_loss_limit(
+            self, opened: list[Position], closed_positions: list[ClosedPosition] ):
+
+        closed_pnl = self.calculate_close_pnl(closed_positions)
+        floating_pnl = self.calculate_floating_pnl(opened)
+        total_pnl_today = closed_pnl + floating_pnl
+
+        loss_ratio = total_pnl_today / self.config.DAILY_LOSS_LIMIT
+
+        print(loss_ratio)
+        if loss_ratio < -1 :
+            self.trader.close_all_open_position()
+            self.trader.cancel_all_pending_orders()
+            # self.TRADER_IS_UP = False
 
     def exec_open_pending_orders(self, entries: list[EntryDecision]):
         current_price = self.trader.get_current_price(self.config.SYMBOL)
@@ -70,31 +94,41 @@ class TradeExecutor:
 
             self.logger.info(f"Successfully created {success_count}/{len(risk_entry.limit_orders)} orders")
 
+    def calculate_close_pnl(self, closed_positions: list[ClosedPosition]):
+        if not closed_positions:
+            return 0
+        else:
+            profit = sum(pos.profit for pos in closed_positions)
+            commissions = sum(pos.commission for pos in closed_positions)
+            swaps = sum(pos.swap for pos in closed_positions)
+            return profit + commissions + swaps
 
-    def manage(self, trades: Trades):
+    def calculate_floating_pnl(self, opened: list[Position]):
+        if not opened:
+            return 0
+        else:
+            profit = sum(pos.profit for pos in opened)
+            swaps = sum(pos.swap for pos in opened)
+            return profit + swaps
+
+
+    def manage(self, trades: Trades, date_helper: DateHelper):
+        start_date = f"{date_helper.get_date_days_ago(0)}T00:00:00Z"
+        end_date = f"{date_helper.get_date_days_ago(-1)}T00:00:00Z"
+
         entries: list[EntryDecision] = trades.entries
         exits: list[ExitDecision] = trades.exits
 
-        print(entries)
-        print(exits)
-
-        self.exec_open_pending_orders(entries)
-
-        closed_positions = self.trader.get_closed_positions("2025-08-22", "2025-08-24")
+        closed_positions = self.trader.get_closed_positions(start_date, end_date)
         pending_orders = self.trader.get_pending_orders(self.config.SYMBOL)
         open_positions = self.trader.get_open_positions(self.config.SYMBOL)
 
-        print( pending_orders )
-        print( open_positions )
-        print( closed_positions )
+        current_time = datetime.now().astimezone()
+
+        self.manage_exits(exits, open_positions)
+        self._check_catastrophic_loss_limit(open_positions, closed_positions)
+        # is_trade_allow = self._check_schedule()
+        # if (is_trade_allow):
+        self.exec_open_pending_orders(entries)
 
 
-        # print(self.open_pending_p(entries) )
-
-            # # Check pending orders
-            # pending = self.trader.get_pending_orders(risk_entry.limit_orders[0]['symbol'])
-            # self.logger.info(f"Current pending orders for {risk_entry.limit_orders[0]['symbol']}: {len(pending)} orders")
-
-        # for trade in trades.entries:
-        #     risk_entries: RiskEntryResult = self.risk_calculator.process_entry_signal(trade, current_price)
-        #     print(risk_entries)

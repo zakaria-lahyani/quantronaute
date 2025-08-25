@@ -4,7 +4,7 @@ import logging
 from app.clients.mt5.client import MT5Client
 from app.clients.mt5.models.history import ClosedPosition
 from app.clients.mt5.models.order import PendingOrder
-from app.clients.mt5.models.position import Position
+from app.clients.mt5.models.response import Position
 
 from app.trader.base_trader import BaseTrader
 from app.trader.risk_manager.models import RiskEntryResult
@@ -314,8 +314,44 @@ class LiveTrader(BaseTrader):
             List of closed positions
         """
         try:
-            # Assuming there's a history client in MT5Client
-            positions = self.client.history.get_closed_positions(start, end)
+            # Get positions as dictionaries from the API
+            positions_data = self.client.history.get_closed_positions(start, end)
+            
+            # Convert dictionaries to ClosedPosition objects
+            positions = []
+            for pos_dict in positions_data:
+                try:
+                    # Handle the time field properly - it might already be a datetime object
+                    if 'time' in pos_dict and isinstance(pos_dict['time'], str):
+                        # Parse the datetime string if it's a string
+                        pos_dict['time'] = pos_dict['time']
+                    
+                    # Create ClosedPosition object
+                    position = ClosedPosition(
+                        ticket=pos_dict.get('ticket', 0),
+                        symbol=pos_dict.get('symbol', ''),
+                        price=pos_dict.get('price', 0.0),
+                        volume=pos_dict.get('volume', 0.0),
+                        profit=pos_dict.get('profit', 0.0),
+                        time=pos_dict.get('time'),
+                        order=pos_dict.get('order', 0),
+                        position_id=pos_dict.get('position_id', 0),
+                        external_id=pos_dict.get('external_id', ''),
+                        type=pos_dict.get('type', 0),
+                        comment=pos_dict.get('comment', ''),
+                        commission=pos_dict.get('commission', 0.0),
+                        swap=pos_dict.get('swap', 0.0),
+                        fee=pos_dict.get('fee', 0.0),
+                        reason=pos_dict.get('reason', 0),
+                        entry=pos_dict.get('entry', 0),
+                        magic=pos_dict.get('magic', 0),
+                        time_msc=pos_dict.get('time_msc', 0)
+                    )
+                    positions.append(position)
+                except Exception as e:
+                    self.logger.warning(f"Failed to parse closed position: {e}, data: {pos_dict}")
+                    continue
+            
             self.logger.debug(
                 f"Retrieved {len(positions)} closed positions from {start} to {end}"
             )

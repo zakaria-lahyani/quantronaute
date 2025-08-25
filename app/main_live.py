@@ -42,14 +42,6 @@ def main():
     }
     entry_manager = EntryManager(strategies, symbol=config.SYMBOL, pip_value=config.PIP_VALUE)
 
-    scaling_config = ScalingConfig(
-        num_entries=config.POSITION_SPLIT,
-        scaling_type=config.SCALING_TYPE,
-        entry_spacing=config.ENTRY_SPACING,
-        max_risk_per_group=config.RISK_PER_GROUP
-    )
-    risk_manager = RiskCalculator(scaling_config)
-
     # indicator configuration
     indicator_config = load_indicator_configuration(folder_path=config.CONF_FOLDER_PATH, symbol=config.SYMBOL)
 
@@ -105,7 +97,7 @@ def main():
                     strateg_result: AllStrategiesEvaluationResult = engine.evaluate(recent_rows)
                     entries: Trades = entry_manager.manage_trades(strateg_result.strategies, recent_rows, account_balance)
 
-                    trade_executor.manage(entries)
+                    trade_executor.manage(entries, date_helper=DateHelper())
 
                     # Reset error counter on successful iteration
                     consecutive_errors = 0

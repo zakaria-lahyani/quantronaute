@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from app.clients.mt5.models.position import Position
+from app.clients.mt5.models.response import Position
 from app.clients.mt5.models.order import PendingOrder
 from app.clients.mt5.models.history import ClosedPosition
 from app.trader.risk_manager.models import RiskEntryResult
