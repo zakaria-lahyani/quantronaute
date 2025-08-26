@@ -77,6 +77,7 @@ class PITRegimeDetector:
         # Incremental states
         self.prev_close = None
         self.ema = {"ema12": None, "ema26": None, "ema20": None, "ema50": None, "ema200": None}
+        self.ema20_prev = None  # For true EMA20 slope calculation
         self.macd_signal = None
         self.rsi_avg_gain = None
         self.rsi_avg_loss = None
@@ -163,9 +164,10 @@ class PITRegimeDetector:
         tr = true_range(h, l, self.prev_close)
         self.atr14 = wilder_update(self.atr14, tr, 14)
         self.atr50 = wilder_update(self.atr50, tr, 50)
-        # Better handling of ATR ratio with proper None check and zero protection
+        # Better handling of ATR ratio with proper None check, zero protection, and outlier clipping
         if self.atr14 is not None and self.atr50 not in (None, 0.0):
             atr_ratio = self.atr14 / self.atr50
+            atr_ratio = float(np.clip(atr_ratio, 0.5, 3.0))  # clamp anti-outliers
         else:
             atr_ratio = 1.0
 
@@ -191,24 +193,27 @@ class PITRegimeDetector:
         self.close_win.append(c)
         bb_width = bb_width_from_window(self.close_win, 20, 2.0)
         self.bb_hist.append(bb_width)
-        # Percentile threshold from *past only* (exclude current value)
-        if len(self.bb_hist) > 1:
+        # Percentile threshold from *past only* (exclude current value) with stability floor
+        if len(self.bb_hist) > 50:  # Need sufficient history for stable percentile
             bb_thresh = float(np.percentile(list(self.bb_hist)[:-1], 70))
+        elif len(self.bb_hist) > 1:
+            # During build-up phase, use a conservative threshold
+            bb_thresh = 0.04
         else:
             bb_thresh = 0.04
 
-        # Direction & Volatility heuristic
-        # EMA slope calculation (simple approach using recent price vs EMA)
+        # True EMA20 slope calculation (t vs t-1) - AFTER updating EMA20
         ema_slope = 0.0
-        if self.ema["ema20"] is not None and len(self.close_win) >= 2:
-            # Simple slope: compare current close to EMA20
-            # Positive if price above EMA20, negative if below
-            ema_slope = 1 if c > self.ema["ema20"] else -1
+        if self.ema["ema20"] is not None and self.ema20_prev is not None:
+            d = self.ema["ema20"] - self.ema20_prev
+            ema_slope = 1.0 if d > 0 else (-1.0 if d < 0 else 0.0)
         
-        # compute direction score
+        # Update EMA20 previous for next iteration
+        self.ema20_prev = self.ema["ema20"]
+        
+        # compute direction score (removed c > ema20 to avoid double counting with ema_slope)
         dir_score = 0
-        if self.ema["ema20"] is not None and self.ema["ema50"] is not None and self.ema["ema200"] is not None:
-            dir_score += 1 if c > self.ema["ema20"] else -1
+        if self.ema["ema50"] is not None and self.ema["ema200"] is not None:
             dir_score += 2 if c > self.ema["ema50"] else -2
             dir_score += 3 if c > self.ema["ema200"] else -3
         # momentum
@@ -234,12 +239,13 @@ class PITRegimeDetector:
         # Confidence proxy (adaptive based on available signals)
         # Calculate total weight based on actually available signals
         total_weight = 0
-        if self.ema["ema20"] is not None and self.ema["ema50"] is not None and self.ema["ema200"] is not None:
-            total_weight += 1 + 2 + 3  # EMA contributions
+        if self.ema["ema50"] is not None and self.ema["ema200"] is not None:
+            total_weight += 2 + 3  # EMA contributions (removed ema20 to avoid double counting)
         total_weight += 2 + 1  # RSI always available after warmup
         if macd_hist is not None:
             total_weight += 2  # MACD contribution
-        total_weight += 1  # EMA slope contribution
+        if ema_slope != 0.0:  # EMA slope contribution (only when available)
+            total_weight += 1
         
         confidence = min(1.0, abs(dir_score) / total_weight) if total_weight > 0 else 0.0
 
