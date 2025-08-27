@@ -11,7 +11,7 @@ from app.utils.config import LoadEnvironmentVariables, YamlConfigurationManager
 from app.utils.functions_helper import list_files_in_folder
 
 
-def load_historical_data(symbol:str, timeframes: list[str], data_source: DataSourceManager, start_date:str, end_date:str) -> Dict[str, Any]:
+def load_historical_data(symbol:str, timeframes: list[str], data_source: DataSourceManager ) -> Dict[str, Any]:
     """Load historical data for all timeframes"""
     historicals = {}
     for tf in timeframes:

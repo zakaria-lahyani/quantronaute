@@ -151,14 +151,15 @@ class IndicatorProcessor:
             self._logger.error(f"Failed to compute indicators for timeframe {timeframe}: {str(e)}")
             raise
 
-    def process_new_row(self, timeframe: str, row: pd.Series) -> pd.Series:
+    def process_new_row(self, timeframe: str, row: pd.Series, regime_data: Optional[Dict] = None) -> pd.Series:
         """
         Process a new market data row with indicator computation and storage.
 
         This is the main processing method that:
         1. Computes indicators for the input row
-        2. Stores the processed row in recent rows manager
-        3. Returns the stored row for immediate use
+        2. Adds regime data if provided
+        3. Stores the processed row in recent rows manager
+        4. Returns the stored row for immediate use
 
         The method ensures data consistency by returning the actual stored
         row rather than the computed row, which may have been modified
@@ -167,9 +168,10 @@ class IndicatorProcessor:
         Args:
             timeframe: The timeframe identifier
             row: Raw market data row to process
+            regime_data: Optional dict with regime, regime_confidence, is_transition keys
 
         Returns:
-            pd.Series: Processed row with indicators, as stored in the system
+            pd.Series: Processed row with indicators and regime data, as stored in the system
 
         Raises:
             ValueError: If timeframe is not supported
@@ -184,13 +186,19 @@ class IndicatorProcessor:
             # Step 1: Compute indicators
             row_with_indicators = self.compute_indicators(timeframe, row)
 
-            # Step 2: Process the row with previous values and store it
+            # Step 2: Add regime data if provided
+            if regime_data:
+                row_with_indicators['regime'] = regime_data.get('regime', 'unknown')
+                row_with_indicators['regime_confidence'] = regime_data.get('regime_confidence', 0.0)
+                row_with_indicators['is_transition'] = regime_data.get('is_transition', False)
+
+            # Step 3: Process the row with previous values and store it
             # This will add previous_* columns from the last stored row
             processed_row = self._recent_rows_manager.process_backtest_with_indicators_row(
                 timeframe, row_with_indicators
             )
 
-            # Step 3: Return the processed row with previous values
+            # Step 4: Return the processed row with previous values and regime data
             return processed_row
 
         except Exception as e:

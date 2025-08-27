@@ -11,7 +11,7 @@ class LiveDataSource(DataSourceInterface):
     def __init__(self, client: MT5Client, date_helper: DateHelper):
         self.client = client
         self.date_helper = date_helper
-        self.HISTORY_DAYS_LOOKUP = { "1": 7, "5": 7, "15": 10, "30": 10, "60": 15, "240": 15 }
+        self.HISTORY_DAYS_LOOKUP = { "1": 30, "5": 30, "15": 30, "30": 30, "60": 30, "240": 60 }
 
 
     def get_historical_data(self, symbol: str, timeframe: str) -> pd.DataFrame:

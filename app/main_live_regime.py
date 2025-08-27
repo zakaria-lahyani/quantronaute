@@ -4,24 +4,19 @@ from collections import deque
 from pathlib import Path
 import time
 import logging
+import pandas as pd
 
 from app.clients.mt5.client import create_client_with_retry
 from app.data.data_manger import DataSourceManager
 from app.entry_manager.manager import EntryManager
 from app.indicators.indicator_processor import IndicatorProcessor
 from app.strategy_builder.data.dtos import Trades, AllStrategiesEvaluationResult
-from app.trader.risk_manager.models import ScalingConfig, RiskEntryResult
-from app.trader.risk_manager.risk_calculator import RiskCalculator
 from app.trader.trade_executor import TradeExecutor
 from app.utils.config import LoadEnvironmentVariables
 from app.utils.date_helper import DateHelper
-
-# Regime detection imports
-from app.regime.regime_detector import RegimeDetector
-from app.regime.data_structure import BarData
-
-# TODO: refactor
+from app.regime.regime_manager import RegimeManager
 from app.main_backtest import load_strategies_configuration, load_indicator_configuration
+# TODO: refactor
 from app.utils.functions_helper import has_new_candle
 
 # Setup logging
@@ -64,6 +59,18 @@ def main():
     # -----------------------------
     indicators = IndicatorProcessor(configs=indicator_config, historicals=historicals, is_bulk=False)
 
+    # -----------------------------
+    # SETUP REGIME DETECTION
+    # -----------------------------
+    regime_manager = RegimeManager(
+        warmup_bars=500,
+        persist_n=2,
+        transition_bars=3,
+        bb_threshold_len=200
+    )
+    regime_manager.setup(timeframes, historicals)
+    logger.info(f"Regime manager initialized for {len(timeframes)} timeframes")
+
     mode = "live"
     trade_executor = TradeExecutor(mode, config, client=client)
 
@@ -84,7 +91,13 @@ def main():
                     if has_new_candle(df_stream, last_known_bars[tf], candle_index):
                         last_known_bars[tf] = df_stream.iloc[-candle_index]
                         try:
-                            indicators.process_new_row(tf, df_stream.iloc[-candle_index])
+                            # Update regime for this timeframe first
+                            regime_data = regime_manager.update(tf, df_stream.iloc[-candle_index])
+                            logger.debug(f"Regime for {tf}: {regime_data['regime']} (confidence: {regime_data['regime_confidence']:.2%})")
+                            
+                            # Process indicators with regime data
+                            indicators.process_new_row(tf, df_stream.iloc[-candle_index], regime_data)
+                            
                         except Exception as e:
                             logger.error(f"Error processing indicators for {tf}: {e}")
                             continue
@@ -93,15 +106,19 @@ def main():
                     logger.warning(f"Error fetching stream data for {tf}: {e}")
                     continue
 
-            # @TODO: compute the regime only if the last_known_bars for the regime timeframes is changed
-
             # Only evaluate strategy if we got data from at least one timeframe
             if success_count > 0:
                 try:
-                    # signal results
+                    # Get recent rows from indicators (already enriched with regime data)
                     recent_rows: dict[str, deque] = indicators.get_recent_rows()
 
-                    # @todo : i want to update the evaluate so i can filter entries based on the regime
+                    # @todo : print the columns stored in recent rows for each timeframe
+                    # Log current regime states for monitoring
+                    # all_regimes = regime_manager.get_all_regimes()
+                    # for tf, regime_data in all_regimes.items():
+                    #     logger.debug(f"TF {tf}: regime={regime_data['regime']}, confidence={regime_data['regime_confidence']:.2%}")
+                    
+                    # Evaluate strategies with regime-enriched data
                     strateg_result: AllStrategiesEvaluationResult = engine.evaluate(recent_rows)
                     entries: Trades = entry_manager.manage_trades(strateg_result.strategies, recent_rows, account_balance)
 

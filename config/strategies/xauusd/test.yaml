@@ -7,7 +7,7 @@ meta:
   created_at: "2025-08-10T09:25:00Z"
 
 
-timeframes: ["1"]
+timeframes: ["1", "240"]
 
 entry:
   long:
@@ -17,6 +17,10 @@ entry:
         operator: ">"
         value: "previous_close"
         timeframe: "1"
+      - signal: "regime"
+        operator: "=="
+        value: "bull_contraction"
+        timeframe: "240"
   short:
     mode: all
     conditions:
