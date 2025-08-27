@@ -7,7 +7,7 @@ meta:
   created_at: "2025-08-10T09:25:00Z"
 
 
-timeframes: ["1", "240"]
+timeframes: ["1", "15", "240"]
 
 entry:
   long:
@@ -21,13 +21,13 @@ entry:
         operator: "=="
         value: "bull_contraction"
         timeframe: "240"
-  short:
-    mode: all
-    conditions:
-      - signal: "close"
-        operator: "<"
-        value: "previous_close"
-        timeframe: "1"
+#  short:
+#    mode: all
+#    conditions:
+#      - signal: "close"
+#        operator: "<"
+#        value: "previous_close"
+#        timeframe: "1"
 
 exit:
   long:
@@ -36,15 +36,15 @@ exit:
       - signal: "close"
         operator: "<"
         value: "previous_close"
-        timeframe: "1"
+        timeframe: "15"
 
-  short:
-    mode: all
-    conditions:
-      - signal: "close"
-        operator: ">"
-        value: "previous_close"
-        timeframe: "1"
+#  short:
+#    mode: all
+#    conditions:
+#      - signal: "close"
+#        operator: ">"
+#        value: "previous_close"
+#        timeframe: "1"
 
 risk:
   position_sizing:

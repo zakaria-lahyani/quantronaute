@@ -11,7 +11,7 @@ class LiveDataSource(DataSourceInterface):
     def __init__(self, client: MT5Client, date_helper: DateHelper):
         self.client = client
         self.date_helper = date_helper
-        self.HISTORY_DAYS_LOOKUP = { "1": 30, "5": 30, "15": 30, "30": 30, "60": 30, "240": 60 }
+        self.HISTORY_DAYS_LOOKUP = { "1": 30, "5": 50, "15": 50, "30": 100, "60": 100, "240": 150 }
 
 
     def get_historical_data(self, symbol: str, timeframe: str) -> pd.DataFrame:
@@ -29,7 +29,6 @@ class LiveDataSource(DataSourceInterface):
             start=f"{start_date}T00:00:00Z",
             end=f"{end_date}T00:00:00Z"
         )
-
         # Convert list of HistoricalBar objects to list of dictionaries
         bars_dict = [bar.model_dump() for bar in data]
         df = pd.DataFrame(bars_dict)
@@ -44,9 +43,12 @@ class LiveDataSource(DataSourceInterface):
         date_today = self.date_helper.get_today()
         max_time = df["time"].max()
 
-        if max_time.date() == date_today:
+        # Check if we need to remove today's latest row
+        if max_time.date() == pd.to_datetime(date_today).date():
+            print("removing the max time row")
             # Exclude the max time row
             df = df[df["time"] != max_time]
+            print(f"Rows remaining: {len(df)}")
 
         return df
 
