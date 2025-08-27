@@ -116,6 +116,7 @@ def main():
                     strateg_result: AllStrategiesEvaluationResult = engine.evaluate(recent_rows)
                     entries: Trades = entry_manager.manage_trades(strateg_result.strategies, recent_rows, account_balance)
 
+                    print(entries)
                     trade_executor.manage(entries, date_helper=DateHelper())
 
                     # Reset error counter on successful iteration

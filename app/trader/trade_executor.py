@@ -28,13 +28,6 @@ class TradeExecutor:
         )
         self.risk_calculator = RiskCalculator(self.scaling_config)
 
-        # self.trade_restriction = TradeRestriction(
-        #     restriction_path=config.RESTRICTION_CONF_FOLDER_PATH,
-        #     default_close_time_str=config.DEFAULT_CLOSE_TIME,
-        #     news_duration=config.NEWS_RESTRICTION_DURATION,
-        #     market_close_duration=config.MARKET_CLOSE_RESTRICTION_DURATION
-        # )
-
         if mode == 'live':
             if 'client' not in kwargs:
                 raise ValueError("Live trading requires client")
@@ -64,6 +57,98 @@ class TradeExecutor:
             self.trader.cancel_all_pending_orders()
             # self.TRADER_IS_UP = False
 
+    def filter_duplicate_entries(
+        self, 
+        entries: list[EntryDecision], 
+        open_positions: list[Position], 
+        pending_orders: list[PendingOrder]
+    ) -> list[EntryDecision]:
+        """
+        Filter out entry signals that would create duplicate trades.
+        Checks both open positions and pending orders for matching magic number and type.
+        
+        Args:
+            entries: List of entry decisions to filter
+            open_positions: Currently open positions
+            pending_orders: Currently pending orders
+            
+        Returns:
+            Filtered list of entry decisions without duplicates
+        """
+        if not entries:
+            return entries
+        
+        filtered_entries = []
+        
+        # Debug logging
+        self.logger.info(f"=== DUPLICATE FILTER START ===")
+        self.logger.info(f"Checking {len(entries)} entries for duplicates")
+        self.logger.info(f"Current open positions: {len(open_positions)}")
+        self.logger.info(f"Current pending orders: {len(pending_orders)}")
+        
+        # Create sets of existing trades for quick lookup
+        # Format: (magic, type) where type is 0 for buy/long, 1 for sell/short
+        existing_positions = {
+            (pos.magic, pos.type) 
+            for pos in open_positions
+        }
+        
+        existing_pending = {
+            (order.magic, order.type) 
+            for order in pending_orders
+        }
+        
+        # Debug: Show existing trades
+        if existing_positions:
+            self.logger.info(f"Existing positions (magic, type): {existing_positions}")
+        if existing_pending:
+            self.logger.info(f"Existing pending (magic, type): {existing_pending}")
+        
+        # Combine both sets
+        existing_trades = existing_positions | existing_pending
+        
+        for entry in entries:
+            # Convert entry signal to MT5 order type
+            # 0=BUY, 1=SELL, 2=BUY_LIMIT, 3=SELL_LIMIT
+            type_map = {
+                'BUY': 0,
+                'SELL': 1,
+                'BUY_LIMIT': 2,
+                'SELL_LIMIT': 3
+            }
+            entry_type = type_map.get(entry.entry_signals, -1)
+            
+            if entry_type == -1:
+                self.logger.error(f"Unknown entry signal type: {entry.entry_signals}")
+                continue
+                
+            trade_key = (entry.magic, entry_type)
+            
+            self.logger.info(f"Checking entry: magic={entry.magic}, type={entry_type}, signal={entry.entry_signals}")
+            
+            if trade_key not in existing_trades:
+                filtered_entries.append(entry)
+                self.logger.info(
+                    f"Entry ALLOWED: {entry.strategy_name} {entry.direction} "
+                    f"(magic={entry.magic}, type={entry_type})"
+                )
+            else:
+                self.logger.warning(
+                    f"Entry BLOCKED (duplicate): {entry.strategy_name} {entry.direction} "
+                    f"(magic={entry.magic}, type={entry_type}) - "
+                    f"Already exists in {'positions' if trade_key in existing_positions else 'pending orders'}"
+                )
+        
+        initial_count = len(entries)
+        filtered_count = len(filtered_entries)
+        
+        self.logger.info(
+            f"=== FILTER RESULT: {filtered_count}/{initial_count} entries passed "
+            f"({initial_count - filtered_count} duplicates removed) ==="
+        )
+        
+        return filtered_entries
+    
     def exec_open_pending_orders(self, entries: list[EntryDecision]):
         current_price = self.trader.get_current_price(self.config.SYMBOL)
 
@@ -128,8 +213,12 @@ class TradeExecutor:
 
         self.manage_exits(exits, open_positions)
         self._check_catastrophic_loss_limit(open_positions, closed_positions)
+        
+        # Filter out duplicate entries before execution
+        filtered_entries = self.filter_duplicate_entries(entries, open_positions, pending_orders)
+        
         # is_trade_allow = self._check_schedule()
         # if (is_trade_allow):
-        self.exec_open_pending_orders(entries)
+        self.exec_open_pending_orders(filtered_entries)
 
 
