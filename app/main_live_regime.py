@@ -26,8 +26,6 @@ logger = logging.getLogger(__name__)
 
 def main():
     candle_index = 2
-    show_columns_info = True  # Set to True to enable detailed column logging
-    show_columns_every_n = 10  # Show column info every N iterations
     iteration_counter = 0  # Counter for iterations
 
     # Load configuration

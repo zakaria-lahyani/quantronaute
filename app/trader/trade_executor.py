@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 from app.clients.mt5.models.history import ClosedPosition
+from app.clients.mt5.models.order import PendingOrder
 from app.clients.mt5.models.response import Position
 from app.strategy_builder.data.dtos import Trades, EntryDecision, ExitDecision
 from app.trader.live_trader import LiveTrader
@@ -120,8 +121,8 @@ class TradeExecutor:
         exits: list[ExitDecision] = trades.exits
 
         closed_positions = self.trader.get_closed_positions(start_date, end_date)
-        pending_orders = self.trader.get_pending_orders(self.config.SYMBOL)
-        open_positions = self.trader.get_open_positions(self.config.SYMBOL)
+        pending_orders: list[PendingOrder] = self.trader.get_pending_orders(self.config.SYMBOL)
+        open_positions: list[Position] = self.trader.get_open_positions(self.config.SYMBOL)
 
         current_time = datetime.now().astimezone()
 
