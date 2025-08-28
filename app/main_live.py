@@ -5,6 +5,10 @@ from pathlib import Path
 import time
 import logging
 
+# Configure warnings early (must be before other imports)
+from app.utils.warnings_config import configure_warnings
+configure_warnings()
+
 from app.clients.mt5.client import create_client_with_retry
 from app.data.data_manger import DataSourceManager
 from app.entry_manager.manager import EntryManager
