@@ -55,11 +55,10 @@ class RiskMonitor:
             f"Risk Check: Daily PnL={total_pnl:.2f}, Limit={self.daily_loss_limit:.2f}, "
             f"Ratio={loss_ratio:.3f}"
         )
-        
-        # Direct comparison: if PnL is worse (more negative) than limit, breach
-        if total_pnl < self.daily_loss_limit:  # Loss exceeds limit
+
+        if loss_ratio < -1:  # Loss exceeds limit
             self.logger.critical(
-                f"🚨 CATASTROPHIC LOSS LIMIT BREACHED! "
+                f"CATASTROPHIC LOSS LIMIT BREACHED! "
                 f"PnL={total_pnl:.2f} exceeds limit of {self.daily_loss_limit:.2f}"
             )
             
@@ -101,11 +100,16 @@ class RiskMonitor:
             closed_positions, open_positions
         )
         
+        floating_pnl = self.pnl_calculator.calculate_floating_pnl(open_positions)
+        closed_pnl = self.pnl_calculator.calculate_closed_pnl(closed_positions)
+        
         return {
-            'total_daily_pnl': total_pnl,
+            'daily_pnl': closed_pnl,  # Daily realized PnL from closed positions
+            'floating_pnl': floating_pnl,  # Unrealized PnL from open positions
+            'total_pnl': total_pnl,  # Total PnL (daily + floating)
+            'total_daily_pnl': total_pnl,  # For backward compatibility
             'daily_loss_limit': self.daily_loss_limit,
             'loss_ratio': total_pnl / self.daily_loss_limit if self.daily_loss_limit != 0 else 0,
             'open_positions_count': len(open_positions),
-            'floating_pnl': self.pnl_calculator.calculate_floating_pnl(open_positions),
-            'closed_pnl': self.pnl_calculator.calculate_closed_pnl(closed_positions)
+            'closed_pnl': closed_pnl  # For backward compatibility
         }

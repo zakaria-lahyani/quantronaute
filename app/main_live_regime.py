@@ -11,7 +11,7 @@ from app.data.data_manger import DataSourceManager
 from app.entry_manager.manager import EntryManager
 from app.indicators.indicator_processor import IndicatorProcessor
 from app.strategy_builder.data.dtos import Trades, AllStrategiesEvaluationResult
-from app.trader.trade_executor import TradeExecutor
+from app.trader.trade_executor_facade import TradeExecutor
 from app.utils.config import LoadEnvironmentVariables
 from app.utils.date_helper import DateHelper
 from app.regime.regime_manager import RegimeManager

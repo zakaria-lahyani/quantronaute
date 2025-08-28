@@ -25,6 +25,11 @@ class TestTradeExecutorIntegration:
         config.RISK_PER_GROUP = 2.0
         config.SYMBOL = "XAUUSD"
         config.DAILY_LOSS_LIMIT = -1000.0
+        config.RESTRICTION_CONF_FOLDER_PATH = "/config"
+        config.DEFAULT_CLOSE_TIME = "16:00"
+        config.NEWS_RESTRICTION_DURATION = 30
+        config.MARKET_CLOSE_RESTRICTION_DURATION = 60
+        config.ACCOUNT_TYPE = "daily"
         return config
     
     @pytest.fixture
