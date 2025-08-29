@@ -9,8 +9,8 @@ from app.strategy_builder.data.dtos import Trades
 from app.utils.config import LoadEnvironmentVariables
 from app.utils.date_helper import DateHelper
 
-from .executor_builder import ExecutorBuilder
-from .trade_executor_v3 import TradeExecutorV3
+from app.trader.executor_builder import ExecutorBuilder
+from app.trader.trade_executor import TradeExecutor
 
 
 class TradeExecutor:
@@ -43,7 +43,7 @@ class TradeExecutor:
             raise ValueError("Live trading requires client")
             
         # Build the executor using the builder
-        self._executor: TradeExecutorV3 = ExecutorBuilder.build_from_config(
+        self._executor: TradeExecutor = ExecutorBuilder.build_from_config(
             config=config,
             client=kwargs['client'],
             logger=self.logger

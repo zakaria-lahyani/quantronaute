@@ -15,10 +15,10 @@ from .components.duplicate_filter import DuplicateFilter
 from .components.pnl_calculator import PnLCalculator
 from .components.risk_monitor import RiskMonitor
 from .components.order_executor import OrderExecutor
-from .trade_restriction import TradeRestriction
-from .suspension_store import SuspensionStore
-from .restriction_manager import RestrictionManager
-from .trade_executor_v3 import TradeExecutorV3
+from app.trader.managers.trade_restriction import TradeRestriction
+from app.trader.managers.suspension_store import SuspensionStore
+from app.trader.managers.restriction_manager import RestrictionManager
+from .trade_executor import TradeExecutor
 
 
 class ExecutorBuilder:
@@ -32,7 +32,7 @@ class ExecutorBuilder:
         config: LoadEnvironmentVariables,
         client,
         logger: Optional[logging.Logger] = None
-    ) -> TradeExecutorV3:
+    ) -> TradeExecutor:
         """
         Build a TradeExecutor from configuration.
         
@@ -94,7 +94,7 @@ class ExecutorBuilder:
         )
         
         # Create executor
-        return TradeExecutorV3(
+        return TradeExecutor(
             trader=trader,
             exit_manager=exit_manager,
             duplicate_filter=duplicate_filter,
@@ -115,7 +115,7 @@ class ExecutorBuilder:
         restriction_manager: RestrictionManager,
         symbol: str,
         logger: Optional[logging.Logger] = None
-    ) -> TradeExecutorV3:
+    ) -> TradeExecutor:
         """
         Build a TradeExecutor with pre-configured components.
         Useful for testing or custom configurations.
@@ -133,7 +133,7 @@ class ExecutorBuilder:
         Returns:
             Configured TradeExecutorV3 instance
         """
-        return TradeExecutorV3(
+        return TradeExecutor(
             trader=trader,
             exit_manager=exit_manager,
             duplicate_filter=duplicate_filter,
