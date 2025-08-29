@@ -5,8 +5,7 @@ Duplicate Filter - Prevents duplicate trade entries.
 import logging
 from typing import List, Set, Tuple
 
-from ...clients.mt5.models.response import Position
-from ...clients.mt5.models.order import PendingOrder
+from ...clients.mt5.models.response import Position, Order
 from ...strategy_builder.data.dtos import EntryDecision
 
 
@@ -23,7 +22,7 @@ class DuplicateFilter:
         self, 
         entries: List[EntryDecision], 
         open_positions: List[Position], 
-        pending_orders: List[PendingOrder]
+        pending_orders: List[Order]
     ) -> List[EntryDecision]:
         """
         Filter out entry signals that would create duplicate trades.
@@ -73,9 +72,15 @@ class DuplicateFilter:
     def _get_existing_trades(
         self, 
         open_positions: List[Position], 
-        pending_orders: List[PendingOrder]
+        pending_orders: List[Order]
     ) -> Set[Tuple[int, str]]:
         """Get set of existing trades as (magic, direction) tuples."""
+        # Debug: Show raw order types before conversion
+        if pending_orders:
+            sample_orders = pending_orders[:3]  # Show first 3 for debugging
+            for i, order in enumerate(sample_orders):
+                self.logger.info(f"DEBUG Order {i+1}: type={repr(order.type)} (type: {type(order.type).__name__})")
+        
         existing_positions = {
             (pos.magic, self._get_direction_from_type(pos.type)) 
             for pos in open_positions
@@ -140,13 +145,25 @@ class DuplicateFilter:
         }
         return type_map.get(entry_signal, -1)
     
-    def _get_direction_from_type(self, order_type: int) -> str:
+    def _get_direction_from_type(self, order_type) -> str:
         """Convert MT5 order type to trading direction (long/short)."""
-        # MT5 order types: 0=BUY, 1=SELL, 2=BUY_LIMIT, 3=SELL_LIMIT, etc.
-        if order_type in [0, 2, 4, 6]:  # BUY, BUY_LIMIT, BUY_STOP, BUY_STOP_LIMIT
-            return "long"
-        elif order_type in [1, 3, 5, 7]:  # SELL, SELL_LIMIT, SELL_STOP, SELL_STOP_LIMIT
-            return "short"
+        # Handle both integer and string types
+        if isinstance(order_type, str):
+            # String types from API response validator
+            if order_type in ['BUY', 'BUY_LIMIT', 'BUY_STOP', 'BUY_STOP_LIMIT']:
+                return "long"
+            elif order_type in ['SELL', 'SELL_LIMIT', 'SELL_STOP', 'SELL_STOP_LIMIT']:
+                return "short"
+            else:
+                return "unknown"
+        elif isinstance(order_type, int):
+            # Integer types: 0=BUY, 1=SELL, 2=BUY_LIMIT, 3=SELL_LIMIT, etc.
+            if order_type in [0, 2, 4, 6]:  # BUY, BUY_LIMIT, BUY_STOP, BUY_STOP_LIMIT
+                return "long"
+            elif order_type in [1, 3, 5, 7]:  # SELL, SELL_LIMIT, SELL_STOP, SELL_STOP_LIMIT
+                return "short"
+            else:
+                return "unknown"
         else:
             return "unknown"
     

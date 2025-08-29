@@ -156,6 +156,9 @@ class RestrictionManager:
             
     def _suspend_order(self, order) -> None:
         """Suspend a pending order."""
+        # Use volume_current if available and > 0, otherwise use volume_initial
+        volume = order.volume_current if order.volume_current > 0 else getattr(order, 'volume_initial', 0.01)
+        
         suspended_item: SuspendedItem = {
             'ticket': order.ticket,
             'kind': 'pending_order',
@@ -163,7 +166,7 @@ class RestrictionManager:
             'original_tp': order.tp,
             'symbol': order.symbol,
             'order_type': self._get_order_type_name(order.type),
-            'volume': order.volume_current,
+            'volume': volume,
             'price': order.price_open,
             'magic': order.magic
         }
@@ -194,7 +197,8 @@ class RestrictionManager:
         self.suspension_store.add(suspended_item)
         
         try:
-            result = self.trader.update_open_position(position.symbol, position.ticket, None, None)
+            # Use 0 to remove SL/TP, not None
+            result = self.trader.update_open_position(position.symbol, position.ticket, 0, 0)
             if 'error' not in result:
                 self.logger.debug(f"Suspended SL/TP for position {position.ticket}")
         except Exception as e:
@@ -202,8 +206,66 @@ class RestrictionManager:
             
     def _restore_order(self, item: SuspendedItem) -> None:
         """Restore a suspended order."""
-        # TODO: Implement order restoration logic
-        self.logger.info(f"Would restore order {item['ticket']} ({item['order_type']})")
+        try:
+            self.logger.info(
+                f"Restoring pending order (original ticket: {item['ticket']}) "
+                f"({item['order_type']}, {item['volume']}, {item['price']})"
+            )
+            
+            # Recreate the order based on its type
+            order_type = item['order_type']
+            result = None
+            
+            if order_type == 'BUY_LIMIT':
+                result = self.trader.client.orders.create_buy_limit_order(
+                    symbol=item['symbol'],
+                    volume=item['volume'],
+                    price=item['price'],
+                    stop_loss=item['original_sl'],
+                    take_profit=item['original_tp'],
+                    magic=item.get('magic')
+                )
+            elif order_type == 'SELL_LIMIT':
+                result = self.trader.client.orders.create_sell_limit_order(
+                    symbol=item['symbol'],
+                    volume=item['volume'],
+                    price=item['price'],
+                    stop_loss=item['original_sl'],
+                    take_profit=item['original_tp'],
+                    magic=item.get('magic')
+                )
+            elif order_type == 'BUY_STOP':
+                result = self.trader.client.orders.create_buy_stop_order(
+                    symbol=item['symbol'],
+                    volume=item['volume'],
+                    price=item['price'],
+                    stop_loss=item['original_sl'],
+                    take_profit=item['original_tp'],
+                    magic=item.get('magic')
+                )
+            elif order_type == 'SELL_STOP':
+                result = self.trader.client.orders.create_sell_stop_order(
+                    symbol=item['symbol'],
+                    volume=item['volume'],
+                    price=item['price'],
+                    stop_loss=item['original_sl'],
+                    take_profit=item['original_tp'],
+                    magic=item.get('magic')
+                )
+            else:
+                self.logger.warning(f"Unknown order type: {order_type}, cannot restore")
+                return
+            
+            if result and isinstance(result, bool) and result:
+                self.logger.info(f"Successfully restored order (was ticket {item['ticket']})")
+            elif result and isinstance(result, dict) and 'error' not in result:
+                self.logger.info(f"Successfully restored order (was ticket {item['ticket']})")
+            else:
+                error_msg = result.get('error', 'Unknown error') if isinstance(result, dict) else 'Failed'
+                self.logger.error(f"Failed to restore order {item['ticket']}: {error_msg}")
+                
+        except Exception as e:
+            self.logger.error(f"Error restoring pending order {item['ticket']}: {e}")
         
     def _restore_position_protection(self, item: SuspendedItem) -> None:
         """Restore position SL/TP."""

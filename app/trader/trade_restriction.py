@@ -27,7 +27,6 @@ class TradeRestriction:
             event_times = pd.to_datetime(
                 df[df["Restrictions"] == 1]["Dates"], utc=True
             ).dt.tz_convert(current_time.tzinfo)
-
         except Exception as e:
             logger.error(f"Failed to load news events: {e}")
             return False
@@ -64,6 +63,10 @@ class TradeRestriction:
             df["Dates"] = pd.to_datetime(df["Dates"], utc=True).dt.tz_convert(current_time.tzinfo)
 
             df_today = df[(df["Instrument"] == instrument) & (df["Dates"].dt.strftime("%Y-%m-%d") == today_str)]
+            print(df)
+            print(df_today)
+            print(default_close_time)
+
             if not df_today.empty:
                 close_time = df_today.iloc[0]["Dates"]
                 if close_time - timedelta(minutes=self.market_close_duration) <= current_time <= close_time + timedelta(

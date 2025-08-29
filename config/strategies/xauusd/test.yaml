@@ -36,7 +36,7 @@ exit:
       - signal: "close"
         operator: "<"
         value: "previous_close"
-        timeframe: "15"
+        timeframe: "240"
 
 #  short:
 #    mode: all
