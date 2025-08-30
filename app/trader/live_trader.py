@@ -4,7 +4,7 @@ import logging
 from app.clients.mt5.client import MT5Client
 from app.clients.mt5.models.history import ClosedPosition
 from app.clients.mt5.models.order import PendingOrder
-from app.clients.mt5.models.response import Position
+from app.clients.mt5.models.response import Position, Order
 
 from app.trader.base_trader import BaseTrader
 from app.trader.risk_manager.models import RiskEntryResult
@@ -115,7 +115,31 @@ class LiveTrader(BaseTrader):
         try:
             orders = self.client.orders.get_pending_orders(symbol)
             self.logger.debug(f"Retrieved {len(orders)} pending orders")
-            return orders
+            
+            # Convert Order objects to PendingOrder objects
+            pending_orders = []
+            for order in orders:
+                # Get volume, preferring volume_current, then volume_initial, then volume
+                volume_current = getattr(order, 'volume_current', None) or getattr(order, 'volume', None) or 0.01
+                volume_initial = getattr(order, 'volume_initial', None) or volume_current
+                
+                pending_order = PendingOrder(
+                    ticket=order.ticket,
+                    symbol=order.symbol,
+                    type=order.type if isinstance(order.type, int) else self._get_order_type_int(str(order.type)),
+                    price_open=order.price_open or 0.0,
+                    price_current=order.price_current or order.price_open or 0.0,
+                    sl=order.sl or 0.0,
+                    tp=order.tp or 0.0,
+                    volume_initial=volume_initial,
+                    volume_current=volume_current,
+                    state=0,  # Default state, adjust if needed
+                    magic=order.magic if hasattr(order, 'magic') else 0,
+                    comment=order.comment or ""
+                )
+                pending_orders.append(pending_order)
+            
+            return pending_orders
         except Exception as e:
             self.logger.error(f"Failed to get pending orders: {e}")
             return []
@@ -168,11 +192,39 @@ class LiveTrader(BaseTrader):
         try:
             result = self.client.orders.delete_pending_order(ticket)
             self.logger.info(f"Cancelled pending order {ticket}")
+            # Convert boolean result to dictionary format
+            if isinstance(result, bool):
+                if result:
+                    return {"success": True}
+                else:
+                    return {"error": "Failed to cancel order"}
             return result
         except Exception as e:
             self.logger.error(f"Failed to cancel pending order {ticket}: {e}")
             return {"error": str(e)}
 
+    def _get_order_type_int(self, order_type_str: str) -> int:
+        """
+        Convert order type string to integer.
+        
+        Args:
+            order_type_str: Order type as string
+            
+        Returns:
+            Order type as integer
+        """
+        type_map = {
+            'BUY': 0,
+            'SELL': 1,
+            'BUY_LIMIT': 2,
+            'SELL_LIMIT': 3,
+            'BUY_STOP': 4,
+            'SELL_STOP': 5,
+            'BUY_STOP_LIMIT': 6,
+            'SELL_STOP_LIMIT': 7
+        }
+        return type_map.get(order_type_str.upper(), -1)
+    
     def cancel_all_pending_orders(self, symbol: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Cancel all pending orders, optionally filtered by symbol.
@@ -245,6 +297,12 @@ class LiveTrader(BaseTrader):
                 take_profit=tp
             )
             self.logger.info(f"Updated position {ticket} for {symbol}")
+            # Convert boolean result to dictionary format
+            if isinstance(result, bool):
+                if result:
+                    return {"success": True}
+                else:
+                    return {"error": "Failed to update position"}
             return result
         except Exception as e:
             self.logger.error(f"Failed to update position {ticket}: {e}")
@@ -282,6 +340,12 @@ class LiveTrader(BaseTrader):
                 volume=volume
             )
             self.logger.info(f"Closed position {ticket} for {symbol}")
+            # Convert boolean result to dictionary format
+            if isinstance(result, bool):
+                if result:
+                    return {"success": True}
+                else:
+                    return {"error": "Failed to close position"}
             return result
         except Exception as e:
             self.logger.error(f"Failed to close position {ticket}: {e}")
@@ -297,6 +361,12 @@ class LiveTrader(BaseTrader):
         try:
             result = self.client.positions.close_all_positions()
             self.logger.info("Closed all positions")
+            # Convert boolean result to dictionary format
+            if isinstance(result, bool):
+                if result:
+                    return {"success": True}
+                else:
+                    return {"error": "Failed to close all positions"}
             return result
         except Exception as e:
             self.logger.error(f"Failed to close all positions: {e}")

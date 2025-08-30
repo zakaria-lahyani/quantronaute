@@ -33,6 +33,7 @@ class YamlConfigurationManager:
 class LoadEnvironmentVariables:
     def __init__(self, conf_path):
         self.conf_path = conf_path
+        self.ACCOUNT_TYPE = ""
         self.API_BASE_URL = ""
         self.API_TIMEOUT = ""
         self.SYMBOL = ""
@@ -45,6 +46,11 @@ class LoadEnvironmentVariables:
         self.SCALING_TYPE = ""
         self.ENTRY_SPACING = 0
         self.RISK_PER_GROUP = 0
+
+        self.RESTRICTION_CONF_FOLDER_PATH = ""
+        self.DEFAULT_CLOSE_TIME = ""
+        self.NEWS_RESTRICTION_DURATION = 5
+        self.MARKET_CLOSE_RESTRICTION_DURATION = 5
         self._load_env_variables()
 
     def _load_env_variables(self):
@@ -54,6 +60,7 @@ class LoadEnvironmentVariables:
             raise FileNotFoundError(f"{dotenv_path} file not found.")
 
         load_dotenv(dotenv_path)
+        self.ACCOUNT_TYPE = os.getenv('ACCOUNT_TYPE')
         self.API_BASE_URL = os.getenv('API_BASE_URL')
         self.API_TIMEOUT = int(os.getenv('API_TIMEOUT'))
         self.SYMBOL = os.getenv('SYMBOL')
@@ -68,3 +75,8 @@ class LoadEnvironmentVariables:
         self.SCALING_TYPE = os.getenv('SCALING_TYPE')
         self.ENTRY_SPACING = float(os.getenv('ENTRY_SPACING'))
         self.RISK_PER_GROUP = float(os.getenv('RISK_PER_GROUP'))
+
+        self.RESTRICTION_CONF_FOLDER_PATH = os.getenv('RESTRICTION_CONF_FOLDER_PATH')
+        self.DEFAULT_CLOSE_TIME = os.getenv('DEFAULT_CLOSE_TIME')
+        self.NEWS_RESTRICTION_DURATION = int(os.getenv('NEWS_RESTRICTION_DURATION'))
+        self.MARKET_CLOSE_RESTRICTION_DURATION = int(os.getenv('MARKET_CLOSE_RESTRICTION_DURATION'))
