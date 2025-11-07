@@ -1,0 +1,67 @@
+# Trading System Services Configuration
+# This file configures the event-driven trading system services
+
+# Service-specific configuration
+services:
+  data_fetching:
+    enabled: true
+    fetch_interval: 30  # seconds between data fetches (30s to avoid API rate limits)
+    retry_attempts: 3
+    candle_index: 2  # which candle to fetch (1 = most recent closed)
+    nbr_bars: 2  # number of bars to fetch per request
+
+  indicator_calculation:
+    enabled: true
+    recent_rows_limit: 6  # number of recent rows to keep
+    track_regime_changes: true  # track and publish regime changes
+
+  strategy_evaluation:
+    enabled: true
+    evaluation_mode: "on_new_candle"  # when to evaluate strategies
+    min_rows_required: 3  # minimum rows needed for evaluation
+
+  trade_execution:
+    enabled: true
+    execution_mode: "immediate"  # "immediate" or "batch"
+    batch_size: 1  # only used in batch mode
+
+# EventBus configuration
+event_bus:
+  mode: synchronous  # synchronous or asynchronous
+  event_history_limit: 1000  # max events to keep in history
+  log_all_events: false  # log every event for debugging
+
+# Orchestrator configuration
+orchestrator:
+  enable_auto_restart: true  # restart services on failure
+  health_check_interval: 60  # seconds between health checks
+  status_log_interval: 10  # log status every N iterations
+
+# Logging configuration
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: json  # json or text
+  correlation_ids: true  # add correlation IDs to track event flow
+  file_output: false  # write logs to file
+  log_file: "logs/trading_system.log"
+
+# Trading configuration
+# Note: These can be overridden by environment variables:
+#   SYMBOL or TRADING_SYMBOL (both work)
+#   TIMEFRAMES or TRADING_TIMEFRAMES (both work)
+trading:
+  symbol: "EURUSD"  # Override with SYMBOL or TRADING_SYMBOL env var
+  timeframes: ["1", "5", "15", "30", "60", "240"]  # Override with TIMEFRAMES or TRADING_TIMEFRAMES env var
+
+# Risk management
+risk:
+  daily_loss_limit: 1000.0  # max daily loss in account currency
+  max_positions: 10  # maximum open positions
+  max_position_size: 1.0  # maximum lot size per position
+
+# Environment overrides
+# These can be overridden with environment variables:
+# - TRADING_SYMBOL
+# - TRADING_TIMEFRAMES (comma-separated)
+# - RISK_DAILY_LOSS_LIMIT
+# - ORCHESTRATOR_ENABLE_AUTO_RESTART
