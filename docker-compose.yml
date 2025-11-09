@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  # Broker A - Conservative strategy (XAUUSD, BTCUSD)
+  ftmo-swing:
+    build: .
+    image: quantronaute:latest
+    container_name: quantronaute-ftmo-swing
+    volumes:
+      - ./configs/ftmo-swing:/app/config:ro  # Read-only mount
+    env_file:
+      - ./configs/ftmo-swing/.env.broker  # Load environment variables from file
+    restart: unless-stopped
+    networks:
+      - trading-network
+
+
+networks:
+  trading-network:
+    driver: bridge

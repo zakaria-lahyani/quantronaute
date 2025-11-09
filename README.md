@@ -1,12 +1,173 @@
 # quantronaute
 
-### create a virtual env  
+## Table of Contents
+- [Docker Deployment (Multi-Broker)](#docker-deployment-multi-broker)
+- [Local Development Setup](#local-development-setup)
+- [Position Sizing](#position-sizing)
+- [Stop Loss Types](#stop-loss-types)
+- [Take Profit Types](#take-profit-types)
+
+---
+
+## Docker Deployment (Multi-Broker)
+
+Deploy the quantronaute trading system across multiple brokers using Docker. Each broker runs in an isolated container with its own configuration and strategies.
+
+### Quick Start
+
+1. **Build the Docker image:**
+   ```bash
+   docker build -t quantronaute:latest .
+   ```
+
+2. **Start all brokers:**
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **View logs:**
+   ```bash
+   docker-compose logs -f broker-a
+   ```
+
+### Architecture
+
+Each broker container:
+- Runs the same application code (single Docker image)
+- Has its own isolated configuration directory mounted from `configs/broker-{name}/`
+- Connects to a different broker API endpoint
+- Can use completely different trading strategies and risk parameters
+
+### Pre-configured Brokers
+
+The docker-compose includes 3 example brokers:
+
+- **broker-a**: Conservative strategy (XAUUSD, BTCUSD)
+- **broker-b**: Aggressive forex (EURUSD, GBPUSD)
+- **broker-c**: Balanced multi-symbol
+
+### Adding a New Broker
+
+1. **Create broker configuration:**
+   ```bash
+   cp -r configs/broker-template configs/broker-d
+   ```
+
+2. **Create environment file:**
+   ```bash
+   cp configs/broker-d/.env.broker.example configs/broker-d/.env.broker
+   ```
+
+3. **Edit the environment file (`configs/broker-d/.env.broker`):**
+   - Set your broker's `API_BASE_URL`
+   - Configure `SYMBOLS` to trade
+   - Adjust risk parameters (`DAILY_LOSS_LIMIT`, etc.)
+
+4. **Customize configuration files:**
+   - Edit `configs/broker-d/services.yaml`
+   - Modify strategies in `configs/broker-d/strategies/`
+   - Adjust indicators in `configs/broker-d/indicators/`
+   - Set restrictions in `configs/broker-d/restrictions/`
+
+5. **Add service to docker-compose.yml:**
+   ```yaml
+   broker-d:
+     build: .
+     image: quantronaute:latest
+     container_name: quantronaute-broker-d
+     volumes:
+       - ./configs/broker-d:/app/config:ro
+     env_file:
+       - ./configs/broker-d/.env.broker
+     restart: unless-stopped
+     networks:
+       - trading-network
+   ```
+
+6. **Start the new broker:**
+   ```bash
+   docker-compose up -d broker-d
+   ```
+
+### Docker Management Commands
+
+```bash
+# Start all brokers
+docker-compose up -d
+
+# Start specific broker
+docker-compose up -d broker-a
+
+# Stop specific broker
+docker-compose stop broker-a
+
+# View logs for all brokers
+docker-compose logs -f
+
+# View logs for specific broker
+docker-compose logs -f broker-a
+
+# Restart broker (after config changes)
+docker-compose restart broker-a
+
+# Stop all brokers
+docker-compose down
+
+# Rebuild and restart
+docker-compose up -d --build
+```
+
+### Configuration Management
+
+Each broker's configuration is stored in `configs/broker-{name}/`:
+
+```
+configs/broker-a/
+├── .env.broker         # Environment variables (API, symbols, risk params)
+├── .env.broker.example # Template for environment variables
+├── services.yaml       # Service configuration
+├── strategies/         # Trading strategies per symbol
+│   ├── xauusd/
+│   └── btcusd/
+├── indicators/         # Indicator configurations
+└── restrictions/       # Trading restrictions
+```
+
+**To update a broker's configuration:**
+
+1. **Environment variables** (API endpoint, symbols, risk params):
+   - Edit `configs/broker-{name}/.env.broker`
+   - Restart the broker: `docker-compose restart broker-{name}`
+
+2. **Strategies/indicators/restrictions**:
+   - Edit files in `configs/broker-{name}/strategies/`, `indicators/`, or `restrictions/`
+   - Restart the broker: `docker-compose restart broker-{name}`
+
+### Environment Variables
+
+Each broker uses an `.env.broker` file located in its configuration directory. See [.env.docker.template](.env.docker.template) for all available environment variables and detailed documentation.
+
+**Key variables per broker:**
+- `API_BASE_URL`: Broker API endpoint (REQUIRED)
+- `ACCOUNT_TYPE`: daily or swing (REQUIRED)
+- `SYMBOLS`: Comma-separated symbols (REQUIRED)
+- `TRADE_MODE`: live or backtest (REQUIRED)
+- `DAILY_LOSS_LIMIT`: Maximum daily loss
+- Symbol-specific: `{SYMBOL}_PIP_VALUE`, `{SYMBOL}_RISK_PER_GROUP`, etc.
+
+**Example:** Edit `configs/broker-a/.env.broker` to change broker A's settings without affecting other brokers.
+
+---
+
+## Local Development Setup
+
+### Create a virtual env
 - python -m venv venv
 - .\venv\Scripts\Activate.ps1
 - pip install -r requirements.txt
+---
 
-
-# POsition sizing
+## Position Sizing
   1. Percentage (Current): Best for consistent risk management
   position_sizing:
     type: percentage
@@ -30,8 +191,9 @@
     value: 500.0  # Exactly $500 risk
 
 
-  ---
-   STOP LOSS TYPES
+---
+
+## Stop Loss Types
 
   1. Fixed Stop Loss (type: "fixed")
 
@@ -107,8 +269,9 @@
   - Works with any position size
   - Perfect for consistent risk management
 
-  ---
-  🎯 TAKE PROFIT TYPES
+---
+
+## Take Profit Types
 
   1. Fixed Take Profit (type: "fixed")
 
@@ -154,8 +317,9 @@
   - Automatic stop loss movement
   - Execution summary and planning
 
-  ---
-  💡 ADVANCED COMBINATIONS
+---
+
+## Advanced Combinations
 
   Example 1: Conservative Risk Management
 
@@ -211,8 +375,9 @@
           percent: 40
           move_stop: false
 
-  ---
-  🔧 RECOMMENDATIONS FOR YOUR USE CASE
+---
+
+## Recommendations for Your Use Case
 
   For $500 max loss with multiple profit targets, your current setup is optimal:
 

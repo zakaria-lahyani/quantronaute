@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.docker.template
+
+# Configuration directories (mounted at runtime)
+config/
+configs/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+tasks/
+*.md
+!README.md
+
+# Tests
+tests/
+pytest.ini
+.pytest_cache/
+
+# Logs
+logs/
+*.log
+
+# Data files
+*.csv
+*.parquet
+*.db
+*.sqlite
+
+# Docker files
+Dockerfile
+docker-compose*.yml
+.dockerignore
