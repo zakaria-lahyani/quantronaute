@@ -45,7 +45,7 @@ class TestPerformanceAndStress(unittest.TestCase):
     
     def create_large_market_data(self):
         """Create large market dataset for performance testing."""
-        print("📊 Creating large market dataset...")
+        print(" Creating large market dataset...")
         
         # Create 1000 data points for each timeframe
         data_points = 1000
@@ -76,7 +76,7 @@ class TestPerformanceAndStress(unittest.TestCase):
             
             market_data[timeframe] = deque(data_series, maxlen=data_points)
         
-        print(f"✅ Created market data with {data_points} points per timeframe")
+        print(f" Created market data with {data_points} points per timeframe")
         return market_data
     
     def create_test_schema(self):
@@ -247,7 +247,7 @@ class TestPerformanceAndStress(unittest.TestCase):
         )
         load_time = time.time() - start_time
         
-        print(f"✅ Strategy loading time: {load_time:.3f}s")
+        print(f" Strategy loading time: {load_time:.3f}s")
         self.assertLess(load_time, 5.0, "Strategy loading should be under 5 seconds")
         
         # Test evaluation performance
@@ -255,7 +255,7 @@ class TestPerformanceAndStress(unittest.TestCase):
         results = engine.evaluate(self.large_market_data)
         eval_time = time.time() - start_time
         
-        print(f"✅ Evaluation time for {len(results.strategies)} strategies: {eval_time:.3f}s")
+        print(f" Evaluation time for {len(results.strategies)} strategies: {eval_time:.3f}s")
         self.assertLess(eval_time, 10.0, "Evaluation should be under 10 seconds")
         
         # Verify all strategies evaluated
@@ -263,7 +263,7 @@ class TestPerformanceAndStress(unittest.TestCase):
         for strategy_name, result in results.strategies.items():
             self.assertIsNotNone(result.entry)
             self.assertIsNotNone(result.exit)
-            print(f"✅ {strategy_name}: Entry signals generated")
+            print(f" {strategy_name}: Entry signals generated")
     
     def test_multiple_evaluations_performance(self):
         """Test performance of multiple consecutive evaluations."""
@@ -291,9 +291,9 @@ class TestPerformanceAndStress(unittest.TestCase):
         max_time = max(evaluation_times)
         min_time = min(evaluation_times)
         
-        print(f"✅ Average evaluation time: {avg_time:.3f}s")
-        print(f"✅ Min evaluation time: {min_time:.3f}s")
-        print(f"✅ Max evaluation time: {max_time:.3f}s")
+        print(f" Average evaluation time: {avg_time:.3f}s")
+        print(f" Min evaluation time: {min_time:.3f}s")
+        print(f" Max evaluation time: {max_time:.3f}s")
         
         # Performance assertions
         self.assertLess(avg_time, 2.0, "Average evaluation time should be under 2 seconds")
@@ -345,8 +345,8 @@ class TestPerformanceAndStress(unittest.TestCase):
         total_time = time.time() - start_time
         avg_time_per_scenario = total_time / len(position_scenarios)
         
-        print(f"✅ Time-based exit evaluation for {len(position_scenarios)} scenarios: {total_time:.3f}s")
-        print(f"✅ Average time per scenario: {avg_time_per_scenario:.3f}s")
+        print(f" Time-based exit evaluation for {len(position_scenarios)} scenarios: {total_time:.3f}s")
+        print(f" Average time per scenario: {avg_time_per_scenario:.3f}s")
         
         self.assertLess(avg_time_per_scenario, 0.1, "Each scenario should evaluate in under 0.1 seconds")
     
@@ -364,7 +364,7 @@ class TestPerformanceAndStress(unittest.TestCase):
         result = engine.evaluate_single_strategy("Perf Test Complex", self.large_market_data)
         eval_time = time.time() - start_time
         
-        print(f"✅ Complex tree evaluation time: {eval_time:.3f}s")
+        print(f" Complex tree evaluation time: {eval_time:.3f}s")
         self.assertLess(eval_time, 1.0, "Complex tree evaluation should be under 1 second")
         
         # Verify the complex strategy produces valid results
@@ -372,7 +372,7 @@ class TestPerformanceAndStress(unittest.TestCase):
         self.assertIsNotNone(result.entry.short)
         self.assertIsNotNone(result.exit.long)
         
-        print(f"✅ Complex strategy signals - Entry: long={result.entry.long}, short={result.entry.short}")
+        print(f" Complex strategy signals - Entry: long={result.entry.long}, short={result.entry.short}")
     
     # def test_memory_usage_stability(self):
     #     """Test memory usage remains stable during multiple evaluations."""
@@ -403,10 +403,10 @@ class TestPerformanceAndStress(unittest.TestCase):
     #     max_memory = max(memory_readings)
     #     memory_growth = final_memory - initial_memory
     #
-    #     print(f"✅ Initial memory: {initial_memory:.1f} MB")
-    #     print(f"✅ Final memory: {final_memory:.1f} MB")
-    #     print(f"✅ Max memory: {max_memory:.1f} MB")
-    #     print(f"✅ Memory growth: {memory_growth:.1f} MB")
+    #     print(f" Initial memory: {initial_memory:.1f} MB")
+    #     print(f" Final memory: {final_memory:.1f} MB")
+    #     print(f" Max memory: {max_memory:.1f} MB")
+    #     print(f" Memory growth: {memory_growth:.1f} MB")
     #
     #     # Memory should not grow excessively
     #     self.assertLess(memory_growth, 50, "Memory growth should be under 50 MB")
@@ -414,7 +414,7 @@ class TestPerformanceAndStress(unittest.TestCase):
     
     def test_concurrent_strategy_evaluation(self):
         """Test concurrent evaluation scenarios."""
-        print("\n🔄 Testing concurrent evaluation scenarios...")
+        print("\n Testing concurrent evaluation scenarios...")
         
         engine = StrategyEngineFactory.create_engine_for_testing(
             schema_path=self.schema_file,
@@ -440,13 +440,13 @@ class TestPerformanceAndStress(unittest.TestCase):
         total_time = time.time() - start_time
         avg_time = total_time / len(results_list)
         
-        print(f"✅ Concurrent evaluations completed in: {total_time:.3f}s")
-        print(f"✅ Average time per evaluation: {avg_time:.3f}s")
+        print(f" Concurrent evaluations completed in: {total_time:.3f}s")
+        print(f" Average time per evaluation: {avg_time:.3f}s")
         
         # Verify all evaluations completed successfully
         for i, results in enumerate(results_list):
             self.assertEqual(len(results.strategies), 3)
-            print(f"✅ Evaluation {i+1}: All strategies evaluated successfully")
+            print(f" Evaluation {i+1}: All strategies evaluated successfully")
         
         self.assertLess(avg_time, 2.0, "Average concurrent evaluation time should be under 2 seconds")
 

@@ -54,7 +54,7 @@ class PositionsClient(BaseClient):
         ticket = validate_ticket(ticket)
         data = self.get(f"position/{ticket}")
         if isinstance(data, list) and data:
-            return Position(**data[0])  # ✅ Take the first dict
+            return Position(**data[0])  #  Take the first dict
         elif isinstance(data, dict):
             return Position(**data)
         return None

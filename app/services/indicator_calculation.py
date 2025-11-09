@@ -242,7 +242,7 @@ class IndicatorCalculationService(EventDrivenService):
             bar: New candle bar as pandas Series
         """
         self.logger.info(
-            f"📊 [INDICATOR START] {self.symbol} {timeframe} | "
+            f" [INDICATOR START] {self.symbol} {timeframe} | "
             f"Bar: time={bar.name}, close={bar['close']:.5f}"
         )
 
@@ -284,7 +284,7 @@ class IndicatorCalculationService(EventDrivenService):
         tf_recent = recent_rows.get(timeframe)
         num_recent = len(tf_recent) if tf_recent else 0
         self.logger.info(
-            f"✅ [INDICATOR SUCCESS] {self.symbol} {timeframe} | "
+            f" [INDICATOR SUCCESS] {self.symbol} {timeframe} | "
             f"Recent rows available: {num_recent}, regime={current_regime}"
         )
 

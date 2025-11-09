@@ -68,14 +68,14 @@ python tests/data/run_tests.py --mode verbose
 
 The tests cover:
 
-- ✅ **DTO Initialization**: All required and optional fields
-- ✅ **Type Safety**: Literal types and field validation
-- ✅ **Serialization**: JSON encoding/decoding with datetime support
-- ✅ **Data Integrity**: Logical consistency checks
-- ✅ **Nested Structures**: Complex nested dataclass relationships
-- ✅ **Error Handling**: Missing fields and invalid data
-- ✅ **Performance**: Large dataset processing
-- ✅ **Integration Flows**: Complete data transformation pipelines
+-  **DTO Initialization**: All required and optional fields
+-  **Type Safety**: Literal types and field validation
+-  **Serialization**: JSON encoding/decoding with datetime support
+-  **Data Integrity**: Logical consistency checks
+-  **Nested Structures**: Complex nested dataclass relationships
+-  **Error Handling**: Missing fields and invalid data
+-  **Performance**: Large dataset processing
+-  **Integration Flows**: Complete data transformation pipelines
 
 ## Key Test Fixtures
 

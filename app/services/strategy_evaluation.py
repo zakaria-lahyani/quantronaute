@@ -82,6 +82,7 @@ class StrategyEvaluationService(EventDrivenService):
         event_bus: EventBus,
         strategy_engine: Any,  # StrategyEngine type from strategy_builder
         entry_manager: Any,  # EntryManager type
+        client: Optional[Any] = None,  # MT5 Client for fetching account balance
         logger: Optional[logging.Logger] = None,
         config: Optional[Dict[str, Any]] = None,
     ):
@@ -92,6 +93,7 @@ class StrategyEvaluationService(EventDrivenService):
             event_bus: EventBus for publishing/subscribing events
             strategy_engine: StrategyEngine for evaluating strategies
             entry_manager: EntryManager for generating trade decisions
+            client: Optional MT5 client for fetching account balance
             logger: Optional logger
             config: Service configuration with keys:
                 - symbol: Trading symbol (required)
@@ -106,6 +108,7 @@ class StrategyEvaluationService(EventDrivenService):
 
         self.strategy_engine = strategy_engine
         self.entry_manager = entry_manager
+        self.client = client
 
         # Validate required config
         if not config:
@@ -261,13 +264,19 @@ class StrategyEvaluationService(EventDrivenService):
             f"Evaluated {len(strategy_results.strategies)} strategies"
         )
 
-        # Step 2: Generate trade decisions using entry manager
-        # Note: entry_manager.manage_trades expects account_balance
-        # For now, we'll pass None and let it handle the default
+        # Step 2: Get account balance
+        account_balance = None
+        if self.client:
+            try:
+                account_balance = self.client.account.get_balance()
+            except Exception as e:
+                self.logger.warning(f"Failed to fetch account balance: {e}")
+
+        # Step 3: Generate trade decisions using entry manager
         trades = self.entry_manager.manage_trades(
             strategy_results.strategies,
             recent_rows,
-            account_balance=None  # Will be set by TradeExecutionService
+            account_balance=account_balance
         )
 
         # Log trade generation results

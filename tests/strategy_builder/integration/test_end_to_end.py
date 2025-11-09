@@ -208,19 +208,19 @@ class TestEndToEndWorkflow(unittest.TestCase):
         self.assertEqual(len(strategy_names), 2)
         self.assertIn("E2E Test Strategy 1", strategy_names)
         self.assertIn("E2E Test Strategy 2", strategy_names)
-        print(f"✅ Loaded {len(strategy_names)} strategies: {strategy_names}")
+        print(f" Loaded {len(strategy_names)} strategies: {strategy_names}")
         
         # Step 3: Get strategy details
         strategy1 = engine.get_strategy_info("E2E Test Strategy 1")
         self.assertEqual(strategy1.name, "E2E Test Strategy 1")
         self.assertIsNotNone(strategy1.entry.long)
         self.assertIsNotNone(strategy1.exit.long.time_based)
-        print("✅ Strategy details retrieved successfully")
+        print(" Strategy details retrieved successfully")
         
         # Step 4: Evaluate all strategies
         results = engine.evaluate(self.market_data)
         self.assertEqual(len(results.strategies), 2)
-        print("✅ Strategy evaluation completed")
+        print(" Strategy evaluation completed")
         
         # Step 5: Check individual strategy results
         strategy1_result = results.strategies["E2E Test Strategy 1"]
@@ -232,14 +232,14 @@ class TestEndToEndWorkflow(unittest.TestCase):
         self.assertIsInstance(strategy1_result.entry.long, bool)
         self.assertIsInstance(strategy1_result.exit.long, bool)
         
-        print(f"✅ Strategy 1 signals - Entry: long={strategy1_result.entry.long}, Exit: long={strategy1_result.exit.long}")
-        print(f"✅ Strategy 2 signals - Entry: long={strategy2_result.entry.long}, short={strategy2_result.entry.short}")
+        print(f" Strategy 1 signals - Entry: long={strategy1_result.entry.long}, Exit: long={strategy1_result.exit.long}")
+        print(f" Strategy 2 signals - Entry: long={strategy2_result.entry.long}, short={strategy2_result.entry.short}")
         
         # Step 6: Test single strategy evaluation
         single_result = engine.evaluate_single_strategy("E2E Test Strategy 1", self.market_data)
         self.assertEqual(single_result.strategy_name, "E2E Test Strategy 1")
         print(f"single_result : {single_result}")
-        print("✅ Single strategy evaluation working")
+        print(" Single strategy evaluation working")
 
     def test_complete_workflow_with_position_data(self):
         """Test complete workflow including time-based exits with position data."""
@@ -274,8 +274,8 @@ class TestEndToEndWorkflow(unittest.TestCase):
         exit_signals = executor.check_exit()
         
         # The time-based exit should trigger for long positions
-        print(f"✅ exit_signals: {exit_signals}")
-        print(f"✅ Time-based exit result: {exit_signals.long}")
+        print(f" exit_signals: {exit_signals}")
+        print(f" Time-based exit result: {exit_signals.long}")
 
         # Step 5: Test with fresh position (should not trigger time-based exit)
         fresh_position_data = {
@@ -292,9 +292,9 @@ class TestEndToEndWorkflow(unittest.TestCase):
         )
         
         fresh_exit_signals = fresh_executor.check_exit()
-        print(f"✅ Fresh position exit result: {fresh_exit_signals.long}")
+        print(f" Fresh position exit result: {fresh_exit_signals.long}")
         
-        print("✅ Time-based exit functionality validated in end-to-end test")
+        print(" Time-based exit functionality validated in end-to-end test")
     
     def test_error_handling_and_edge_cases(self):
         """Test error handling and edge cases in the complete workflow."""
@@ -310,7 +310,7 @@ class TestEndToEndWorkflow(unittest.TestCase):
                 schema_path=self.schema_file,
                 config_paths=[invalid_strategy_file]
             )
-        print("✅ Invalid YAML handling working")
+        print(" Invalid YAML handling working")
         
         # Test 2: Missing strategy file
         with self.assertRaises(FileNotFoundError):
@@ -318,7 +318,7 @@ class TestEndToEndWorkflow(unittest.TestCase):
                 schema_path=self.schema_file,
                 config_paths=["nonexistent.yaml"]
             )
-        print("✅ Missing file handling working")
+        print(" Missing file handling working")
         
         # Test 3: Empty market data
         engine = StrategyEngineFactory.create_engine_for_testing(
@@ -330,14 +330,14 @@ class TestEndToEndWorkflow(unittest.TestCase):
         results = engine.evaluate(empty_data)
         # Should handle gracefully without crashing
         self.assertIsInstance(results.strategies, dict)
-        print("✅ Empty market data handling working")
+        print(" Empty market data handling working")
         
         # Test 4: Strategy with non-existent timeframe in market data
         limited_data = {"1": self.market_data["1"]}  # Only M1 data
         results = engine.evaluate(limited_data)
         # Should handle missing timeframes gracefully
         self.assertIsInstance(results.strategies, dict)
-        print("✅ Missing timeframe data handling working")
+        print(" Missing timeframe data handling working")
     
     def test_strategy_activation_and_validation(self):
         """Test strategy activation and data validation features."""
@@ -358,17 +358,17 @@ class TestEndToEndWorkflow(unittest.TestCase):
         # Test data availability validation
         data_available = executor.validate_data_availability()
         self.assertTrue(data_available)
-        print("✅ Data availability validation working")
+        print(" Data availability validation working")
         
         # Test strategy activation check
         is_active = executor.is_strategy_active()
         self.assertTrue(is_active)  # Should be active by default
-        print("✅ Strategy activation check working")
+        print(" Strategy activation check working")
         
         # Test strategy name retrieval
         strategy_name = executor.get_strategy_name()
         self.assertEqual(strategy_name, "E2E Test Strategy 1")
-        print("✅ Strategy name retrieval working")
+        print(" Strategy name retrieval working")
     
     def test_all_signal_types_and_operators(self):
         """Test various signal types and operators in end-to-end workflow."""
@@ -425,9 +425,9 @@ class TestEndToEndWorkflow(unittest.TestCase):
         
         complex_result = results.strategies["Complex Operator Test"]
         self.assertIsNotNone(complex_result.entry)
-        print("✅ Complex operators (crosses_above, changes_to, remains) working")
+        print(" Complex operators (crosses_above, changes_to, remains) working")
         
-        print(f"✅ Complex strategy signals - Entry: long={complex_result.entry.long}")
+        print(f" Complex strategy signals - Entry: long={complex_result.entry.long}")
 
 
 if __name__ == '__main__':

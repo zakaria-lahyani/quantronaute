@@ -197,7 +197,7 @@ class DataFetchingService(EventDrivenService):
 
         for tf in self.timeframes:
             try:
-                self.logger.info(f"🔄 [FETCH START] {self.symbol} {tf} - Requesting {self.nbr_bars} bars...")
+                self.logger.info(f" [FETCH START] {self.symbol} {tf} - Requesting {self.nbr_bars} bars...")
 
                 # Fetch streaming data
                 df_stream = self.data_source.get_stream_data(
@@ -208,7 +208,7 @@ class DataFetchingService(EventDrivenService):
 
                 # Validate data
                 if df_stream.empty:
-                    self.logger.warning(f"❌ [FETCH FAILED] {self.symbol} {tf} - Empty data received")
+                    self.logger.warning(f" [FETCH FAILED] {self.symbol} {tf} - Empty data received")
                     self._publish_fetch_error(tf, "Empty DataFrame received", None)
                     continue
 
@@ -218,7 +218,7 @@ class DataFetchingService(EventDrivenService):
                 # Log fetched data details
                 latest_bar = df_stream.iloc[-1]
                 self.logger.info(
-                    f"✅ [FETCH SUCCESS] {self.symbol} {tf} - Received {len(df_stream)} bars | "
+                    f" [FETCH SUCCESS] {self.symbol} {tf} - Received {len(df_stream)} bars | "
                     f"Latest: time={latest_bar.name}, open={latest_bar['open']:.5f}, "
                     f"high={latest_bar['high']:.5f}, low={latest_bar['low']:.5f}, "
                     f"close={latest_bar['close']:.5f}, volume={latest_bar.get('tick_volume', 'N/A')}"
@@ -243,13 +243,13 @@ class DataFetchingService(EventDrivenService):
                     old_bar = self.last_known_bars[tf]
                     if old_bar is not None:
                         self.logger.info(
-                            f"🆕 [NEW CANDLE] {self.symbol} {tf} | "
+                            f" [NEW CANDLE] {self.symbol} {tf} | "
                             f"Old: time={old_bar.name}, close={old_bar['close']:.5f} → "
                             f"New: time={new_bar.name}, close={new_bar['close']:.5f}"
                         )
                     else:
                         self.logger.info(
-                            f"🆕 [NEW CANDLE] {self.symbol} {tf} | "
+                            f" [NEW CANDLE] {self.symbol} {tf} | "
                             f"First candle: time={new_bar.name}, close={new_bar['close']:.5f}"
                         )
 

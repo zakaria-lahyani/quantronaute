@@ -74,6 +74,41 @@ def validate_volume(volume: float) -> float:
     return float(volume)
 
 
+def normalize_volume(volume: float, volume_step: float = 0.01) -> float:
+    """
+    Normalize trading volume to broker's volume step.
+
+    Args:
+        volume: Raw volume to normalize
+        volume_step: Broker's minimum volume step (default: 0.01 for most brokers)
+
+    Returns:
+        Normalized volume rounded to the nearest volume step
+
+    Example:
+        >>> normalize_volume(0.09505657810293679, 0.01)
+        0.10
+        >>> normalize_volume(0.09505657810293679, 0.001)
+        0.095
+    """
+    if volume_step <= 0:
+        raise ValueError("volume_step must be positive")
+
+    # Round to nearest volume step
+    normalized = round(volume / volume_step) * volume_step
+
+    # Ensure minimum volume
+    if normalized < volume_step:
+        normalized = volume_step
+
+    # Round to avoid floating point precision issues
+    # Determine decimal places from volume_step
+    import math
+    decimal_places = abs(int(math.floor(math.log10(volume_step))))
+
+    return round(normalized, decimal_places)
+
+
 def validate_ticket(ticket: int) -> int:
     """Validate ticket number."""
     if not isinstance(ticket, int) or ticket <= 0:

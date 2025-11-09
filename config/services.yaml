@@ -47,21 +47,40 @@ logging:
 
 # Trading configuration
 # Note: These can be overridden by environment variables:
-#   SYMBOL or TRADING_SYMBOL (both work)
+#   SYMBOLS or TRADING_SYMBOLS - Comma-separated list (e.g., "XAUUSD,BTCUSD,EURUSD")
+#   SYMBOL (legacy, single symbol) - Falls back to single symbol if SYMBOLS not provided
 #   TIMEFRAMES or TRADING_TIMEFRAMES (both work)
 trading:
-  symbol: "EURUSD"  # Override with SYMBOL or TRADING_SYMBOL env var
+  symbols: ["EURUSD"]  # Override with SYMBOLS or TRADING_SYMBOLS env var (comma-separated)
   timeframes: ["1", "5", "15", "30", "60", "240"]  # Override with TIMEFRAMES or TRADING_TIMEFRAMES env var
 
 # Risk management
 risk:
-  daily_loss_limit: 1000.0  # max daily loss in account currency
+  daily_loss_limit: 1000.0  # Legacy - use account_stop_loss.daily_loss_limit
   max_positions: 10  # maximum open positions
   max_position_size: 1.0  # maximum lot size per position
 
+  # Account-level stop loss (protects entire account across all symbols)
+  account_stop_loss:
+    enabled: true  # Enable account-level stop loss monitoring
+    daily_loss_limit: 1000.0  # Max daily loss in account currency
+    max_drawdown_pct: 10.0  # Max drawdown from peak (percentage)
+    close_positions_on_breach: true  # Close all positions when limit hit
+    stop_trading_on_breach: true  # Stop all trading services when limit hit
+    cooldown_period_minutes: 60  # Cooldown before allowing trading again
+    daily_reset_time: "00:00:00"  # Time to reset daily P&L
+    timezone_offset: "+00:00"  # Timezone offset for reset time
+
 # Environment overrides
 # These can be overridden with environment variables:
-# - TRADING_SYMBOL
-# - TRADING_TIMEFRAMES (comma-separated)
+# - TRADING_SYMBOLS or SYMBOLS (comma-separated, e.g., "XAUUSD,BTCUSD")
+# - TRADING_TIMEFRAMES or TIMEFRAMES (comma-separated)
 # - RISK_DAILY_LOSS_LIMIT
 # - ORCHESTRATOR_ENABLE_AUTO_RESTART
+#
+# Multi-symbol example in .env:
+#   SYMBOLS=XAUUSD,BTCUSD,EURUSD
+#   # Optional: Symbol-specific configurations
+#   XAUUSD_PIP_VALUE=100
+#   BTCUSD_PIP_VALUE=100
+#   EURUSD_PIP_VALUE=10000

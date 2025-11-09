@@ -879,17 +879,17 @@ if __name__ == "__main__":
     for test_name, test_func in test_methods:
         try:
             test_func()
-            print(f"✅ {test_name}")
+            print(f" {test_name}")
             tests_passed += 1
         except Exception as e:
-            print(f"❌ {test_name}: {str(e)}")
+            print(f" {test_name}: {str(e)}")
             tests_failed += 1
 
     print("=" * 50)
-    print(f"📊 Test Results: {tests_passed} passed, {tests_failed} failed")
+    print(f" Test Results: {tests_passed} passed, {tests_failed} failed")
     print("🎯 Full test suite requires pytest with proper imports")
 
     if tests_failed == 0:
         print("🎉 All basic tests passed! The RecentRowsProcessor is well-tested!")
     else:
-        print("⚠️  Some tests failed. Check the implementation.")
+        print("  Some tests failed. Check the implementation.")

@@ -39,7 +39,7 @@ class ColoredTestResult(unittest.TextTestResult):
         super().addSuccess(test)
         self.success_count += 1
         if self.verbosity > 1:
-            self.stream.write("✅ ")
+            self.stream.write(" ")
             self.stream.write(str(test))
             self.stream.write(" ... ")
             self.stream.writeln("PASS")
@@ -47,7 +47,7 @@ class ColoredTestResult(unittest.TextTestResult):
     def addError(self, test, err):
         super().addError(test, err)
         if self.verbosity > 1:
-            self.stream.write("❌ ")
+            self.stream.write(" ")
             self.stream.write(str(test))
             self.stream.write(" ... ")
             self.stream.writeln("ERROR")
@@ -55,7 +55,7 @@ class ColoredTestResult(unittest.TextTestResult):
     def addFailure(self, test, err):
         super().addFailure(test, err)
         if self.verbosity > 1:
-            self.stream.write("❌ ")
+            self.stream.write(" ")
             self.stream.write(str(test))
             self.stream.write(" ... ")
             self.stream.writeln("FAIL")
@@ -90,7 +90,7 @@ def discover_and_run_tests(test_dir, pattern="test_*.py", description=""):
     start_dir = Path(__file__).parent / test_dir
     
     if not start_dir.exists():
-        print(f"⚠️ Test directory {start_dir} does not exist, skipping...")
+        print(f" Test directory {start_dir} does not exist, skipping...")
         return unittest.TestResult(), 0
     
     suite = loader.discover(str(start_dir), pattern=pattern)
@@ -98,7 +98,7 @@ def discover_and_run_tests(test_dir, pattern="test_*.py", description=""):
     # Count tests
     test_count = suite.countTestCases()
     if test_count == 0:
-        print(f"⚠️ No tests found in {test_dir}")
+        print(f" No tests found in {test_dir}")
         return unittest.TestResult(), 0
     
     print(f"📋 Found {test_count} tests")
@@ -110,9 +110,9 @@ def discover_and_run_tests(test_dir, pattern="test_*.py", description=""):
     end_time = time.time()
     
     # Print summary
-    print(f"\n📊 {description} Summary:")
-    print(f"   ✅ Passed: {result.success_count}")
-    print(f"   ❌ Failed: {len(result.failures)}")
+    print(f"\n {description} Summary:")
+    print(f"    Passed: {result.success_count}")
+    print(f"    Failed: {len(result.failures)}")
     print(f"   💥 Errors: {len(result.errors)}")
     print(f"   ⏭️ Skipped: {len(result.skipped)}")
     print(f"   ⏱️ Time: {end_time - start_time:.2f}s")
@@ -127,7 +127,7 @@ def print_detailed_failures(result, test_type):
         print("="*60)
         
         for test, traceback in result.failures:
-            print(f"\n❌ FAILURE: {test}")
+            print(f"\n FAILURE: {test}")
             print("-" * 40)
             print(traceback)
         
@@ -139,7 +139,7 @@ def print_detailed_failures(result, test_type):
 
 def run_comprehensive_tests():
     """Run all tests in the correct order with comprehensive reporting."""
-    print("🚀 Starting Comprehensive Strategy Engine Test Suite")
+    print(" Starting Comprehensive Strategy Engine Test Suite")
     print("="*60)
     
     total_tests = 0
@@ -188,9 +188,9 @@ def run_comprehensive_tests():
     print(f"\n{'='*60}")
     print("🏁 COMPREHENSIVE TEST SUITE SUMMARY")
     print(f"{'='*60}")
-    print(f"📊 Total Tests Run: {total_tests}")
-    print(f"✅ Total Passed: {total_passed}")
-    print(f"❌ Total Failed: {total_failed}")
+    print(f" Total Tests Run: {total_tests}")
+    print(f" Total Passed: {total_passed}")
+    print(f" Total Failed: {total_failed}")
     print(f"💥 Total Errors: {total_errors}")
     print(f"⏭️ Total Skipped: {total_skipped}")
     
@@ -207,8 +207,8 @@ def run_comprehensive_tests():
         print(f"\n🎉 ALL TESTS PASSED! Strategy engine is ready for production.")
         return True
     else:
-        print(f"\n⚠️ TESTS FAILED! Please review the failures above.")
-        print(f"❌ {total_failed + total_errors} tests need attention.")
+        print(f"\n TESTS FAILED! Please review the failures above.")
+        print(f" {total_failed + total_errors} tests need attention.")
         return False
 
 

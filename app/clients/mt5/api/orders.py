@@ -12,7 +12,7 @@ from app.clients.mt5.models.response import (
     DeletePendingOrderRequest,
     OrderType,
 )
-from app.clients.mt5.utils import validate_symbol, validate_ticket, validate_volume
+from app.clients.mt5.utils import validate_symbol, validate_ticket, validate_volume, normalize_volume
 
 
 class OrdersClient(BaseClient):
@@ -47,6 +47,7 @@ class OrdersClient(BaseClient):
         """
         symbol = validate_symbol(symbol)
         volume = validate_volume(volume)
+        volume = normalize_volume(volume)  # Normalize to broker's volume step
 
         order_data = CreateOrderRequest(
             symbol=symbol,

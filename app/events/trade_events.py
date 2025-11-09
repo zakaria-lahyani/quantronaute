@@ -6,7 +6,7 @@ positions are closed, or risk limits are breached.
 """
 
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from app.events.base import Event
 
@@ -129,3 +129,30 @@ class TradingBlockedEvent(Event):
     """
     symbol: str
     reasons: List[str]
+
+
+@dataclass(frozen=True)
+class TradesExecutedEvent(Event):
+    """
+    Published when trades are successfully executed.
+
+    This event contains metadata about executed trades including TP targets
+    for position monitoring.
+
+    Attributes:
+        symbol: Trading symbol
+        direction: Trade direction ("long" or "short")
+        total_volume: Total volume executed
+        order_count: Number of orders executed
+        strategy_name: Name of the strategy
+        metadata: Additional metadata including:
+            - tp_targets: List of TP levels for position monitoring
+            - tickets: List of order tickets
+            - group_id: Group ID for scaled entries
+    """
+    symbol: str
+    direction: str
+    total_volume: float
+    order_count: int
+    strategy_name: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None

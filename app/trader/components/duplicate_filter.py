@@ -123,13 +123,13 @@ class DuplicateFilter:
             if trade_key not in existing_trades:
                 filtered_entries.append(entry)
                 self.logger.info(
-                    f"✅ Entry ALLOWED: {entry.strategy_name} {entry.direction} "
+                    f" Entry ALLOWED: {entry.strategy_name} {entry.direction} "
                     f"(magic={entry.magic}, direction={entry_direction})"
                 )
             else:
                 source = "positions" if trade_key in existing_positions else "pending orders"
                 self.logger.warning(
-                    f"❌ Entry BLOCKED (duplicate): {entry.strategy_name} {entry.direction} "
+                    f" Entry BLOCKED (duplicate): {entry.strategy_name} {entry.direction} "
                     f"(magic={entry.magic}, direction={entry_direction}) - Already exists in {source}"
                 )
         

@@ -92,8 +92,16 @@ class LoggingConfig(BaseModel):
 class TradingConfig(BaseModel):
     """Configuration for trading parameters."""
 
-    symbol: str = Field(min_length=1)
+    symbols: List[str] = Field(min_length=1)
     timeframes: List[str] = Field(min_length=1)
+
+    @field_validator("symbols")
+    @classmethod
+    def validate_symbols(cls, v: List[str]) -> List[str]:
+        """Validate symbols are not empty."""
+        if not v:
+            raise ValueError("At least one symbol must be specified")
+        return [s.upper() for s in v]  # Normalize to uppercase
 
     @field_validator("timeframes")
     @classmethod
@@ -104,12 +112,26 @@ class TradingConfig(BaseModel):
         return v
 
 
+class AccountStopLossConfig(BaseModel):
+    """Configuration for account-level stop loss."""
+
+    enabled: bool = True
+    daily_loss_limit: float = Field(default=1000.0, ge=0)
+    max_drawdown_pct: float = Field(default=10.0, ge=0, le=100)
+    close_positions_on_breach: bool = True
+    stop_trading_on_breach: bool = True
+    cooldown_period_minutes: int = Field(default=60, ge=0)
+    daily_reset_time: str = "00:00:00"
+    timezone_offset: str = "+00:00"
+
+
 class RiskConfig(BaseModel):
     """Configuration for risk management."""
 
-    daily_loss_limit: float = Field(default=1000.0, ge=0)
+    daily_loss_limit: float = Field(default=1000.0, ge=0)  # Legacy - use account_stop_loss.daily_loss_limit
     max_positions: int = Field(default=10, ge=1)
     max_position_size: float = Field(default=1.0, ge=0.01)
+    account_stop_loss: AccountStopLossConfig = Field(default_factory=AccountStopLossConfig)
 
 
 class SystemConfig(BaseModel):
@@ -130,7 +152,7 @@ class SystemConfig(BaseModel):
             Dictionary suitable for TradingOrchestrator initialization
         """
         return {
-            "symbol": self.trading.symbol,
+            "symbols": self.trading.symbols,
             "timeframes": self.trading.timeframes,
             "enable_auto_restart": self.orchestrator.enable_auto_restart,
             "health_check_interval": self.orchestrator.health_check_interval,
@@ -143,34 +165,66 @@ class SystemConfig(BaseModel):
             "execution_mode": self.services.trade_execution.execution_mode,
         }
 
-    def get_data_fetching_config(self) -> Dict[str, Any]:
-        """Get configuration for DataFetchingService."""
+    def get_data_fetching_config(self, symbol: str) -> Dict[str, Any]:
+        """
+        Get configuration for DataFetchingService for a specific symbol.
+
+        Args:
+            symbol: Trading symbol (e.g., "XAUUSD")
+
+        Returns:
+            Configuration dictionary for DataFetchingService
+        """
         return {
-            "symbol": self.trading.symbol,
+            "symbol": symbol,
             "timeframes": self.trading.timeframes,
             "candle_index": self.services.data_fetching.candle_index,
             "nbr_bars": self.services.data_fetching.nbr_bars,
         }
 
-    def get_indicator_calculation_config(self) -> Dict[str, Any]:
-        """Get configuration for IndicatorCalculationService."""
+    def get_indicator_calculation_config(self, symbol: str) -> Dict[str, Any]:
+        """
+        Get configuration for IndicatorCalculationService for a specific symbol.
+
+        Args:
+            symbol: Trading symbol (e.g., "XAUUSD")
+
+        Returns:
+            Configuration dictionary for IndicatorCalculationService
+        """
         return {
-            "symbol": self.trading.symbol,
+            "symbol": symbol,
             "timeframes": self.trading.timeframes,
             "track_regime_changes": self.services.indicator_calculation.track_regime_changes,
         }
 
-    def get_strategy_evaluation_config(self) -> Dict[str, Any]:
-        """Get configuration for StrategyEvaluationService."""
+    def get_strategy_evaluation_config(self, symbol: str) -> Dict[str, Any]:
+        """
+        Get configuration for StrategyEvaluationService for a specific symbol.
+
+        Args:
+            symbol: Trading symbol (e.g., "XAUUSD")
+
+        Returns:
+            Configuration dictionary for StrategyEvaluationService
+        """
         return {
-            "symbol": self.trading.symbol,
+            "symbol": symbol,
             "min_rows_required": self.services.strategy_evaluation.min_rows_required,
         }
 
-    def get_trade_execution_config(self) -> Dict[str, Any]:
-        """Get configuration for TradeExecutionService."""
+    def get_trade_execution_config(self, symbol: str) -> Dict[str, Any]:
+        """
+        Get configuration for TradeExecutionService for a specific symbol.
+
+        Args:
+            symbol: Trading symbol (e.g., "XAUUSD")
+
+        Returns:
+            Configuration dictionary for TradeExecutionService
+        """
         return {
-            "symbol": self.trading.symbol,
+            "symbol": symbol,
             "execution_mode": self.services.trade_execution.execution_mode,
             "batch_size": self.services.trade_execution.batch_size,
         }
@@ -274,11 +328,16 @@ class ConfigLoader:
             Updated configuration dictionary
         """
         # Trading overrides
-        # Check TRADING_SYMBOL first (new naming), then fall back to SYMBOL (legacy .env naming)
-        if symbol := os.getenv("TRADING_SYMBOL") or os.getenv("SYMBOL"):
-            env_var_name = "TRADING_SYMBOL" if os.getenv("TRADING_SYMBOL") else "SYMBOL"
-            logger.info(f"Environment override: {env_var_name}={symbol}")
-            config_dict.setdefault("trading", {})["symbol"] = symbol
+        # Check TRADING_SYMBOLS first (new naming), then fall back to SYMBOLS/SYMBOL (legacy .env naming)
+        if symbols_env := os.getenv("TRADING_SYMBOLS") or os.getenv("SYMBOLS") or os.getenv("SYMBOL"):
+            symbols_list = [s.strip().upper() for s in symbols_env.split(",")]
+            env_var_name = (
+                "TRADING_SYMBOLS" if os.getenv("TRADING_SYMBOLS")
+                else "SYMBOLS" if os.getenv("SYMBOLS")
+                else "SYMBOL"
+            )
+            logger.info(f"Environment override: {env_var_name}={symbols_list}")
+            config_dict.setdefault("trading", {})["symbols"] = symbols_list
 
         # Check TRADING_TIMEFRAMES first, then fall back to TIMEFRAMES (legacy .env naming)
         if timeframes := os.getenv("TRADING_TIMEFRAMES") or os.getenv("TIMEFRAMES"):
@@ -393,7 +452,7 @@ class ConfigLoader:
                 "log_file": "logs/trading_system.log",
             },
             "trading": {
-                "symbol": "EURUSD",
+                "symbols": ["EURUSD"],
                 "timeframes": ["1", "5", "15"],
             },
             "risk": {

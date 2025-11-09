@@ -31,6 +31,7 @@ class ExecutorBuilder:
     def build_from_config(
         config: LoadEnvironmentVariables,
         client,
+        event_bus = None,
         logger: Optional[logging.Logger] = None
     ) -> TradeExecutor:
         """
@@ -73,6 +74,7 @@ class ExecutorBuilder:
             trader,
             risk_calculator,
             config.SYMBOL,
+            event_bus,
             logger
         )
         

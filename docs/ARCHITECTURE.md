@@ -778,12 +778,12 @@ def test_complete_trading_cycle():
 
 The event-driven architecture provides:
 
-✅ **Modularity**: Services are independent and loosely coupled
-✅ **Reliability**: Error isolation, automatic recovery
-✅ **Observability**: Correlation IDs, comprehensive metrics
-✅ **Maintainability**: Clear boundaries, easy to test
-✅ **Scalability**: Easy to add new services
-✅ **Production Ready**: 95% test coverage, proven flows
+ **Modularity**: Services are independent and loosely coupled
+ **Reliability**: Error isolation, automatic recovery
+ **Observability**: Correlation IDs, comprehensive metrics
+ **Maintainability**: Clear boundaries, easy to test
+ **Scalability**: Easy to add new services
+ **Production Ready**: 95% test coverage, proven flows
 
 **Design Principles**:
 1. Loose coupling through events

@@ -31,7 +31,7 @@
 
 
   ---
-  🛑 STOP LOSS TYPES
+   STOP LOSS TYPES
 
   1. Fixed Stop Loss (type: "fixed")
 

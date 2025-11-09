@@ -23,32 +23,32 @@ This guide helps you migrate from the old `main_live_regime.py` to the new event
 
 ### Benefits of the New Architecture
 
-✅ **Event-Driven Design**
+ **Event-Driven Design**
 - Loose coupling between components
 - Services communicate through events
 - Easier to test and maintain
 
-✅ **Service Lifecycle Management**
+ **Service Lifecycle Management**
 - Automatic service initialization in correct order
 - Graceful startup and shutdown
 - Health monitoring with auto-restart
 
-✅ **Enhanced Logging**
+ **Enhanced Logging**
 - Correlation IDs for request tracing
 - JSON and text log formats
 - Per-service log levels
 
-✅ **Configuration Management**
+ **Configuration Management**
 - Type-safe configuration with validation
 - Environment variable overrides
 - Centralized configuration file
 
-✅ **Better Error Handling**
+ **Better Error Handling**
 - Error isolation between services
 - Automatic service restart on failure
 - Comprehensive metrics and monitoring
 
-✅ **Production Ready**
+ **Production Ready**
 - 95% test coverage with 58 tests
 - Proven event flow
 - Health monitoring
@@ -194,11 +194,11 @@ python -m app.main_orchestrated
 ```
 
 Watch for:
-- ✅ All services start successfully
-- ✅ Data fetching works
-- ✅ Indicators calculate correctly
-- ✅ Strategies evaluate
-- ✅ No errors in logs
+-  All services start successfully
+-  Data fetching works
+-  Indicators calculate correctly
+-  Strategies evaluate
+-  No errors in logs
 
 ### Step 4: Run in Parallel (Recommended)
 
@@ -611,12 +611,12 @@ orchestrator.event_bus.subscribe(NewCandleEvent, my_handler)
 
 The new event-driven architecture provides:
 
-✅ **Better Reliability**: Automatic error recovery, health monitoring
-✅ **Better Observability**: Correlation IDs, comprehensive metrics
-✅ **Better Maintainability**: Loose coupling, clear service boundaries
-✅ **Better Testing**: 95% test coverage, proven event flow
-✅ **Production Ready**: Graceful startup/shutdown, configuration management
+ **Better Reliability**: Automatic error recovery, health monitoring
+ **Better Observability**: Correlation IDs, comprehensive metrics
+ **Better Maintainability**: Loose coupling, clear service boundaries
+ **Better Testing**: 95% test coverage, proven event flow
+ **Production Ready**: Graceful startup/shutdown, configuration management
 
 **Migration is straightforward** - the new system works with your existing setup and provides a smooth migration path with rollback options.
 
-Happy Trading! 🚀
+Happy Trading! 
