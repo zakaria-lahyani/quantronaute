@@ -2,6 +2,7 @@
 
 ## Table of Contents
 - [Docker Deployment (Multi-Broker)](#docker-deployment-multi-broker)
+- [Automation Control](#automation-control)
 - [Local Development Setup](#local-development-setup)
 - [Position Sizing](#position-sizing)
 - [Stop Loss Types](#stop-loss-types)
@@ -146,6 +147,111 @@ configs/broker-a/
 ### Environment Variables
 
 Each broker uses an `.env.broker` file located in its configuration directory. See [.env.docker.template](.env.docker.template) for all available environment variables and detailed documentation.
+
+---
+
+## Automation Control
+
+Control automated trading at runtime without stopping the bot. This allows you to pause new position entries while keeping existing stop-loss and take-profit orders active.
+
+### Quick Start
+
+```bash
+# Disable automated trading (emergency stop)
+echo "DISABLE" > configs/broker-a/config/toggle_automation.txt
+
+# Re-enable automated trading
+echo "ENABLE" > configs/broker-a/config/toggle_automation.txt
+
+# Check current status
+echo "QUERY" > configs/broker-a/config/toggle_automation.txt
+tail -f logs/automation_actions.log
+```
+
+### What It Does
+
+**When Automation is DISABLED:**
+- ✅ Existing positions remain active
+- ✅ Stop-loss orders continue working
+- ✅ Take-profit orders continue working
+- ✅ Exit signals are processed normally
+- ❌ New entry signals are suppressed
+- ❌ New positions will not be opened
+
+**When Automation is ENABLED:**
+- ✅ Normal automated trading resumes
+- ✅ Entry signals are generated and executed
+- ✅ New positions can be opened
+
+### Use Cases
+
+**1. Emergency Market Conditions**
+```bash
+# Before high-impact news event
+echo "DISABLE" > configs/broker-a/config/toggle_automation.txt
+
+# After volatility settles
+echo "ENABLE" > configs/broker-a/config/toggle_automation.txt
+```
+
+**2. End of Trading Session**
+```bash
+# Prevent new entries 30 minutes before market close
+echo "DISABLE" > configs/broker-a/config/toggle_automation.txt
+
+# Next trading day
+echo "ENABLE" > configs/broker-a/config/toggle_automation.txt
+```
+
+**3. Daily Loss Limit**
+```bash
+# Stop trading when approaching daily loss limit
+echo "DISABLE" > configs/broker-a/config/toggle_automation.txt
+
+# Next trading day (after reset)
+echo "ENABLE" > configs/broker-a/config/toggle_automation.txt
+```
+
+### Configuration
+
+Add these to your `.env.broker` file (already included in template):
+
+```bash
+# Enable/disable automated trading at startup
+AUTOMATION_ENABLED=true
+
+# File watcher polling interval (seconds)
+AUTOMATION_FILE_WATCHER_INTERVAL=5
+```
+
+### Monitoring
+
+**Check automation log:**
+```bash
+tail -f logs/automation_actions.log
+```
+
+**Example log entries:**
+```
+2025-11-17 14:23:45 - SUCCESS - Command 'DISABLE' processed successfully
+2025-11-17 14:23:45 - INFO - Automation state changed: enabled=False
+2025-11-17 14:25:12 - SUCCESS - Command 'ENABLE' processed successfully
+```
+
+**Application logs show suppressed signals:**
+```bash
+docker-compose logs -f broker-a | grep "ENTRY SUPPRESSED"
+docker-compose logs -f broker-a | grep "TRADE EXECUTION REJECTED"
+```
+
+### For More Details
+
+See the complete [Automation Control Documentation](docs/automation-control.md) for:
+- Architecture and component details
+- Advanced configuration options
+- Troubleshooting guide
+- Best practices
+- Metrics and monitoring
 
 **Key variables per broker:**
 - `API_BASE_URL`: Broker API endpoint (REQUIRED)
