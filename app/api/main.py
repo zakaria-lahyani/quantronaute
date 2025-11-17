@@ -7,7 +7,7 @@ This module creates and configures the FastAPI application for manual trading op
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routers import automation, positions, orders, indicators, strategies, risk, account, system, config
+from app.api.routers import auth, automation, positions, orders, indicators, strategies, risk, account, system, config
 
 
 def create_app() -> FastAPI:
@@ -35,6 +35,7 @@ def create_app() -> FastAPI:
     )
 
     # Include routers
+    app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
     app.include_router(automation.router, prefix="/automation", tags=["Automation Control"])
     app.include_router(orders.router, prefix="/signals", tags=["Manual Trading Signals"])  # Trigger entry/exit
     app.include_router(positions.router, prefix="/positions", tags=["Position Monitoring"])
