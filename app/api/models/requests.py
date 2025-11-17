@@ -30,22 +30,35 @@ class ModifyPositionRequest(BaseModel):
     take_profit: Optional[float] = Field(None, description="New take profit price")
 
 
-class PlaceOrderRequest(BaseModel):
+class TriggerEntrySignalRequest(BaseModel):
     """
-    Request to place a smart order (one-click trading).
+    Request to trigger a manual entry signal.
 
-    The system will automatically calculate:
-    - Entry price (market price)
-    - Position size (based on risk configuration)
-    - Stop loss (based on ATR or configured method)
-    - Take profit targets (single or multiple based on scaling config)
-    - Apply position scaling if configured
-    - Validate against risk limits
+    This publishes an EntrySignalEvent with strategy_name="manual",
+    which flows through the EXACT same pipeline as automated strategy signals:
+    - EntryManager calculates position sizing based on risk config
+    - SL/TP calculated based on configuration (ATR, fixed, etc.)
+    - Position scaling applied if configured
+    - Risk limits validated
+    - Execution through TradeExecutionService → MT5Client
+
+    User provides ONLY symbol and direction - everything else is handled
+    by the existing trading infrastructure.
     """
     symbol: str = Field(..., description="Trading symbol")
     direction: str = Field(..., description="Trade direction (long/short)")
-    strategy_name: Optional[str] = Field("manual", description="Strategy config to use for risk/sizing calculations")
-    risk_override: Optional[float] = Field(None, description="Override risk percentage for this specific trade")
+
+
+class TriggerExitSignalRequest(BaseModel):
+    """
+    Request to trigger a manual exit signal.
+
+    This publishes an ExitSignalEvent with strategy_name="manual",
+    which closes positions through the standard exit logic.
+    """
+    symbol: str = Field(..., description="Trading symbol")
+    direction: str = Field(..., description="Position direction to exit (long/short)")
+    reason: Optional[str] = Field("manual", description="Reason for exit")
 
 
 class UpdateRiskConfigRequest(BaseModel):

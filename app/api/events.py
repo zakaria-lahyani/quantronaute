@@ -2,8 +2,12 @@
 API command events.
 
 This module defines events published by the API to request operations
-from the trading system. These events follow the correlation ID pattern
-for request-response tracking.
+from the trading system.
+
+IMPORTANT: For manual trading (entry/exit signals), the API reuses
+the existing EntrySignalEvent and ExitSignalEvent from strategy_events.py.
+This ensures manual trades flow through the exact same pipeline as
+automated trades, with identical risk management, sizing, and execution logic.
 """
 
 from dataclasses import dataclass
@@ -60,29 +64,26 @@ class ModifyPositionCommandEvent(APICommandEvent):
     take_profit: Optional[float] = None
 
 
-@dataclass(frozen=True, kw_only=True)
-class PlaceSmartOrderCommandEvent(APICommandEvent):
-    """
-    Command to place a smart order (one-click trading).
-
-    The system will handle all calculations:
-    - Entry price (market)
-    - Position sizing (based on risk)
-    - SL calculation (based on ATR/config)
-    - TP calculation (with scaling if configured)
-    - Risk validation
-
-    Attributes:
-        correlation_id: Unique ID to match with response
-        symbol: Trading symbol
-        direction: Trade direction (long/short)
-        strategy_name: Strategy config to use for calculations (default: "manual")
-        risk_override: Optional risk percentage override for this trade
-    """
-    symbol: str
-    direction: str
-    strategy_name: str = "manual"
-    risk_override: Optional[float] = None
+# NOTE: For manual entry/exit signals, the API directly publishes
+# EntrySignalEvent and ExitSignalEvent from app.events.strategy_events
+# instead of custom API command events. This ensures manual trades
+# flow through the identical pipeline as automated strategy trades.
+#
+# Example:
+#   event_bus.publish(EntrySignalEvent(
+#       strategy_name="manual",
+#       symbol="XAUUSD",
+#       direction="long",
+#       entry_price=2650.25
+#   ))
+#
+# This signal is then handled by TradeExecutionService, which:
+# - Uses EntryManager for position sizing and risk validation
+# - Calculates SL/TP based on configuration
+# - Applies position scaling if configured
+# - Executes trades through MT5Client
+#
+# The only difference: strategy_name="manual" instead of "strategy_xyz"
 
 
 @dataclass(frozen=True, kw_only=True)

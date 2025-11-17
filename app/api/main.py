@@ -35,14 +35,14 @@ def create_app() -> FastAPI:
     )
 
     # Include routers
-    app.include_router(automation.router, prefix="/automation", tags=["Automation"])
-    app.include_router(positions.router, prefix="/positions", tags=["Positions"])
-    app.include_router(orders.router, prefix="/orders", tags=["Orders"])
-    app.include_router(indicators.router, prefix="/indicators", tags=["Indicators"])
-    app.include_router(strategies.router, prefix="/strategies", tags=["Strategies"])
-    app.include_router(risk.router, prefix="/risk", tags=["Risk"])
-    app.include_router(account.router, prefix="/account", tags=["Account"])
-    app.include_router(system.router, prefix="/system", tags=["System"])
+    app.include_router(automation.router, prefix="/automation", tags=["Automation Control"])
+    app.include_router(orders.router, prefix="/signals", tags=["Manual Trading Signals"])  # Trigger entry/exit
+    app.include_router(positions.router, prefix="/positions", tags=["Position Monitoring"])
+    app.include_router(indicators.router, prefix="/indicators", tags=["Indicator Monitoring"])
+    app.include_router(strategies.router, prefix="/strategies", tags=["Strategy Monitoring"])
+    app.include_router(risk.router, prefix="/risk", tags=["Risk Management"])
+    app.include_router(account.router, prefix="/account", tags=["Account Info"])
+    app.include_router(system.router, prefix="/system", tags=["System Health"])
 
     return app
 
