@@ -506,18 +506,19 @@ class TradeExecutionService(EventDrivenService):
         except Exception as e:
             self.logger.error(f"Failed to publish RiskLimitBreachedEvent: {e}")
 
-    def _publish_order_rejected(self, reason: str) -> None:
+    def _publish_order_rejected(self, reason: str, direction: str = "long") -> None:
         """
         Publish OrderRejectedEvent.
 
         Args:
-            reason: Reason for order rejection
+            reason: Reason for rejection
+            direction: Trade direction (default: "long")
         """
         try:
             event = OrderRejectedEvent(
                 symbol=self.symbol,
+                direction=direction,
                 reason=reason,
-                order_details={},
             )
             self.publish_event(event)
 
