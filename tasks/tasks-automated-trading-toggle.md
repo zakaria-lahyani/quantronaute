@@ -110,23 +110,23 @@ Update the file after completing each sub-task, not just after completing an ent
     - [x] 2.2.9 Add INFO logging for suppressed position management actions
     - [x] 2.2.10 Include automation state in service metrics
 
-- [ ] **3.0 Implement file-based toggle interface**
-  - [ ] 3.1 Create `app/infrastructure/automation_file_watcher.py`
-    - [ ] 3.1.1 Define `AutomationFileWatcher` class with EventBus and config paths
-    - [ ] 3.1.2 Implement `__init__` method - accept toggle_file path and EventBus reference
-    - [ ] 3.1.3 Implement `start()` method - start polling thread (5-second interval)
-    - [ ] 3.1.4 Implement `stop()` method - gracefully stop polling thread
-    - [ ] 3.1.5 Implement `_poll_file()` method - read toggle file, parse command
-    - [ ] 3.1.6 Parse commands: "ENABLE", "DISABLE", "QUERY" (case-insensitive, strip whitespace)
-    - [ ] 3.1.7 Publish `ToggleAutomationEvent` with parsed action
-    - [ ] 3.1.8 Append result to `automation_log.txt` with timestamp
-    - [ ] 3.1.9 Add error handling for file read failures (retry 3 times, log ERROR)
-    - [ ] 3.1.10 Add thread safety - ensure polling thread is daemon thread
-    - [ ] 3.1.11 Make polling interval configurable (default 5 seconds)
-  - [ ] 3.2 Create automation log file structure
-    - [ ] 3.2.1 Define log entry format: "YYYY-MM-DD HH:MM:SS - ACTION - Status - Message"
-    - [ ] 3.2.2 Implement log rotation (max 10MB, keep last 5 files)
-    - [ ] 3.2.3 Add log sanitization (no sensitive data)
+- [x] **3.0 Implement file-based toggle interface**
+  - [x] 3.1 Create `app/infrastructure/automation_file_watcher.py`
+    - [x] 3.1.1 Define `AutomationFileWatcher` class with EventBus and config paths
+    - [x] 3.1.2 Implement `__init__` method - accept toggle_file path and EventBus reference
+    - [x] 3.1.3 Implement `start()` method - start polling thread (5-second interval)
+    - [x] 3.1.4 Implement `stop()` method - gracefully stop polling thread
+    - [x] 3.1.5 Implement `_poll_file()` method - read toggle file, parse command
+    - [x] 3.1.6 Parse commands: "ENABLE", "DISABLE", "QUERY" (case-insensitive, strip whitespace)
+    - [x] 3.1.7 Publish `ToggleAutomationEvent` with parsed action
+    - [x] 3.1.8 Append result to `automation_log.txt` with timestamp
+    - [x] 3.1.9 Add error handling for file read failures (retry 3 times, log ERROR)
+    - [x] 3.1.10 Add thread safety - ensure polling thread is daemon thread
+    - [x] 3.1.11 Make polling interval configurable (default 5 seconds)
+  - [x] 3.2 Create automation log file structure
+    - [x] 3.2.1 Define log entry format: "YYYY-MM-DD HH:MM:SS - ACTION - Status - Message"
+    - [x] 3.2.2 Implement log rotation (max 10MB, keep last 5 files)
+    - [x] 3.2.3 Add log sanitization (no sensitive data)
 
 - [ ] **4.0 Update orchestrator and configuration**
   - [ ] 4.1 Update `app/infrastructure/orchestrator.py`
