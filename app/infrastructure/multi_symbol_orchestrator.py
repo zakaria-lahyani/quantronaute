@@ -112,6 +112,8 @@ class MultiSymbolTradingOrchestrator:
         # Infrastructure components (shared)
         self.event_bus: Optional[EventBus] = None
         self.account_stop_loss: Optional[AccountStopLossManager] = None
+        self.automation_state_manager: Optional[Any] = None  # AutomationStateManager
+        self.automation_file_watcher: Optional[Any] = None  # AutomationFileWatcher
 
         # State
         self.status = OrchestratorStatus.INITIALIZING
@@ -223,7 +225,47 @@ class MultiSymbolTradingOrchestrator:
             log_all_events=self.config.get('log_all_events', False)
         )
 
-        # Step 1.5: Create account-level stop loss manager
+        # Step 1.5: Create automation control components
+        self.logger.info("Creating automation control components...")
+        try:
+            from app.infrastructure.automation_state_manager import AutomationStateManager
+            from app.infrastructure.automation_file_watcher import AutomationFileWatcher
+
+            # Get automation config (with defaults)
+            automation_config = self.config.get('automation', {})
+            automation_enabled = automation_config.get('enabled', True)
+            state_file = automation_config.get('state_file', 'config/automation_state.json')
+            toggle_file = automation_config.get('toggle_file', 'config/toggle_automation.txt')
+            file_watcher_enabled = automation_config.get('file_watcher_enabled', True)
+            file_watcher_interval = automation_config.get('file_watcher_interval', 5)
+
+            # Create AutomationStateManager
+            self.automation_state_manager = AutomationStateManager(
+                event_bus=self.event_bus,
+                state_file_path=state_file,
+                default_enabled=automation_enabled,
+                logger=logging.getLogger('automation-state')
+            )
+            self.logger.info(f"  ✓ AutomationStateManager created (default_enabled={automation_enabled})")
+
+            # Create AutomationFileWatcher (if enabled)
+            if file_watcher_enabled:
+                self.automation_file_watcher = AutomationFileWatcher(
+                    event_bus=self.event_bus,
+                    toggle_file_path=toggle_file,
+                    poll_interval=file_watcher_interval,
+                    logger=logging.getLogger('automation-watcher')
+                )
+                self.logger.info(f"  ✓ AutomationFileWatcher created (poll_interval={file_watcher_interval}s)")
+            else:
+                self.logger.info("  ⊘ AutomationFileWatcher disabled via config")
+
+        except Exception as e:
+            self.logger.error(f"  ✗ Failed to initialize automation components: {e}", exc_info=True)
+            self.automation_state_manager = None
+            self.automation_file_watcher = None
+
+        # Step 1.6: Create account-level stop loss manager
         if account_stop_loss_config:
             self.logger.info("Creating account-level stop loss manager...")
             self.account_stop_loss = AccountStopLossManager(
@@ -386,10 +428,18 @@ class MultiSymbolTradingOrchestrator:
         self.logger.info(f"  ✓ All services created for {symbol}")
 
     def start(self):
-        """Start all services for all symbols."""
+        """Start all services for all symbols and automation components."""
         self.logger.info("\n=== STARTING ALL SERVICES ===")
         self.status = OrchestratorStatus.RUNNING
         self.start_time = datetime.now()
+
+        # Start automation file watcher (if enabled)
+        if self.automation_file_watcher:
+            try:
+                self.automation_file_watcher.start()
+                self.logger.info("  ✓ AutomationFileWatcher started")
+            except Exception as e:
+                self.logger.error(f"  ✗ Failed to start AutomationFileWatcher: {e}", exc_info=True)
 
         for symbol in self.symbols:
             self.logger.info(f"\n--- Starting services for {symbol} ---")
@@ -405,7 +455,7 @@ class MultiSymbolTradingOrchestrator:
         self.logger.info("\n=== ALL SERVICES STARTED SUCCESSFULLY ===")
 
     def stop(self):
-        """Stop all services gracefully."""
+        """Stop all services and automation components gracefully."""
         self.logger.info("\n=== STOPPING ALL SERVICES ===")
         self.status = OrchestratorStatus.STOPPING
 
@@ -420,6 +470,14 @@ class MultiSymbolTradingOrchestrator:
                         self.logger.info(f"  ✓ {service_name} stopped")
                     except Exception as e:
                         self.logger.error(f"  ✗ Error stopping {service_name}: {e}")
+
+        # Stop automation file watcher
+        if self.automation_file_watcher:
+            try:
+                self.automation_file_watcher.stop()
+                self.logger.info("  ✓ AutomationFileWatcher stopped")
+            except Exception as e:
+                self.logger.error(f"  ✗ Error stopping AutomationFileWatcher: {e}")
 
         self.status = OrchestratorStatus.STOPPED
         self.logger.info("\n=== ALL SERVICES STOPPED ===")
@@ -625,6 +683,7 @@ class MultiSymbolTradingOrchestrator:
                 "total_services": sum(len(services) for services in self.services.values()),
                 "symbols_count": len(self.symbols),
             },
+            "automation": self.automation_state_manager.get_state() if self.automation_state_manager else None,
             "account_stop_loss": self.account_stop_loss.get_metrics_summary() if self.account_stop_loss else None,
             "services": {},
             "event_bus": self.event_bus.get_metrics() if self.event_bus else {}

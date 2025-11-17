@@ -134,6 +134,26 @@ class RiskConfig(BaseModel):
     account_stop_loss: AccountStopLossConfig = Field(default_factory=AccountStopLossConfig)
 
 
+class AutomationConfig(BaseModel):
+    """Configuration for automated trading control."""
+
+    enabled: bool = True
+    state_file: str = "config/automation_state.json"
+    toggle_file: str = "config/toggle_automation.txt"
+    file_watcher_enabled: bool = True
+    file_watcher_interval: int = Field(default=5, ge=1, le=60)
+
+    @field_validator("enabled", mode="before")
+    @classmethod
+    def parse_bool(cls, v: Any) -> bool:
+        """Parse boolean from various string formats."""
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() in ("true", "1", "yes", "on")
+        return bool(v)
+
+
 class SystemConfig(BaseModel):
     """Complete system configuration."""
 
@@ -143,6 +163,7 @@ class SystemConfig(BaseModel):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     trading: TradingConfig
     risk: RiskConfig = Field(default_factory=RiskConfig)
+    automation: AutomationConfig = Field(default_factory=AutomationConfig)
 
     def to_orchestrator_config(self) -> Dict[str, Any]:
         """
@@ -163,6 +184,13 @@ class SystemConfig(BaseModel):
             "track_regime_changes": self.services.indicator_calculation.track_regime_changes,
             "min_rows_required": self.services.strategy_evaluation.min_rows_required,
             "execution_mode": self.services.trade_execution.execution_mode,
+            "automation": {
+                "enabled": self.automation.enabled,
+                "state_file": self.automation.state_file,
+                "toggle_file": self.automation.toggle_file,
+                "file_watcher_enabled": self.automation.file_watcher_enabled,
+                "file_watcher_interval": self.automation.file_watcher_interval,
+            },
         }
 
     def get_data_fetching_config(self, symbol: str) -> Dict[str, Any]:
@@ -394,6 +422,33 @@ class ConfigLoader:
         if log_level := os.getenv("LOGGING_LEVEL"):
             logger.info(f"Environment override: LOGGING_LEVEL={log_level}")
             config_dict.setdefault("logging", {})["level"] = log_level.upper()
+
+        # Automation overrides
+        if automation_enabled := os.getenv("AUTOMATION_ENABLED"):
+            value = automation_enabled.lower() in ("true", "1", "yes", "on")
+            logger.info(f"Environment override: AUTOMATION_ENABLED={value}")
+            config_dict.setdefault("automation", {})["enabled"] = value
+
+        if state_file := os.getenv("AUTOMATION_STATE_FILE"):
+            logger.info(f"Environment override: AUTOMATION_STATE_FILE={state_file}")
+            config_dict.setdefault("automation", {})["state_file"] = state_file
+
+        if toggle_file := os.getenv("AUTOMATION_TOGGLE_FILE"):
+            logger.info(f"Environment override: AUTOMATION_TOGGLE_FILE={toggle_file}")
+            config_dict.setdefault("automation", {})["toggle_file"] = toggle_file
+
+        if watcher_enabled := os.getenv("AUTOMATION_FILE_WATCHER_ENABLED"):
+            value = watcher_enabled.lower() in ("true", "1", "yes", "on")
+            logger.info(f"Environment override: AUTOMATION_FILE_WATCHER_ENABLED={value}")
+            config_dict.setdefault("automation", {})["file_watcher_enabled"] = value
+
+        if watcher_interval := os.getenv("AUTOMATION_FILE_WATCHER_INTERVAL"):
+            try:
+                interval = int(watcher_interval)
+                logger.info(f"Environment override: AUTOMATION_FILE_WATCHER_INTERVAL={interval}")
+                config_dict.setdefault("automation", {})["file_watcher_interval"] = interval
+            except ValueError:
+                logger.warning(f"Invalid AUTOMATION_FILE_WATCHER_INTERVAL value: {watcher_interval}")
 
         return config_dict
 

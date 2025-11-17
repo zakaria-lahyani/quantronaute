@@ -32,6 +32,11 @@ from app.events.trade_events import (
     TradingAuthorizedEvent,
     TradingBlockedEvent,
 )
+from app.events.automation_events import (
+    AutomationAction,
+    ToggleAutomationEvent,
+    AutomationStateChangedEvent,
+)
 
 __all__ = [
     # Base
@@ -59,4 +64,8 @@ __all__ = [
     "RiskLimitBreachedEvent",
     "TradingAuthorizedEvent",
     "TradingBlockedEvent",
+    # Automation events
+    "AutomationAction",
+    "ToggleAutomationEvent",
+    "AutomationStateChangedEvent",
 ]
