@@ -10,6 +10,12 @@
    - News event handling for both account types
    - Configuration examples and troubleshooting
 
+2. **[Manual Trading API](./api-usage.md)** - REST API for monitoring and controlling the trading system
+   - Real-time account, position, and indicator monitoring
+   - Manual trade execution and automation control
+   - JWT authentication and security
+   - See also: [API Integration Guide](./api-integration.md)
+
 ### Quick Reference
 
 #### Account Type Selection
