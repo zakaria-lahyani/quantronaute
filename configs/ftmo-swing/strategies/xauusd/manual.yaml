@@ -11,21 +11,7 @@ meta:
 # (manual signals don't evaluate conditions)
 timeframes: ["1"]
 
-entry:
-  long:
-    mode: all
-    conditions: []  # No conditions - manual signals bypass strategy evaluation
-  short:
-    mode: all
-    conditions: []
 
-exit:
-  long:
-    mode: all
-    conditions: []
-  short:
-    mode: all
-    conditions: []
 
 # RISK CONFIGURATION - This is what matters for manual trading!
 risk:

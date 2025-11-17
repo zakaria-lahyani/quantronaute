@@ -327,7 +327,7 @@ class TradingStrategy(BaseModel):
     # Required api fields
     name: str = Field(..., min_length=1, max_length=100)
     timeframes: List[TimeFrameEnum] = Field(..., min_length=1)
-    entry: EntryDirectionalRules
+    entry: Optional[EntryDirectionalRules] = None
     exit: Optional[ExitDirectionalRules] = None
     risk: RiskManagement
 
@@ -383,10 +383,11 @@ class TradingStrategy(BaseModel):
                 traverse_tree(rules.tree)
 
         # Validate entry rules
-        if self.entry.long:
-            check_rule_set(self.entry.long)
-        if self.entry.short:
-            check_rule_set(self.entry.short)
+        if self.entry:
+            if self.entry.long:
+                check_rule_set(self.entry.long)
+            if self.entry.short:
+                check_rule_set(self.entry.short)
 
         # Validate exit rules
         if self.exit:
@@ -411,6 +412,24 @@ class TradingStrategy(BaseModel):
                 check_profit_guard(self.exit.long)
             if self.exit.short:
                 check_profit_guard(self.exit.short)
+        return self
+
+    @model_validator(mode="after")
+    def validate_manual_strategy_requirements(self) -> "TradingStrategy":
+        """
+        Validate that automated strategies have entry/exit sections.
+        Manual strategies (name='manual') can omit entry/exit sections
+        since they are triggered via API signals, not automated conditions.
+        """
+        is_manual_strategy = self.name == "manual"
+
+        if not is_manual_strategy and not self.entry:
+            raise ValueError(
+                "Entry section is required for automated strategies. "
+                "Only strategies with name='manual' can omit entry/exit sections, "
+                "as they are triggered via API signals rather than automated evaluation."
+            )
+
         return self
 
     def model_dump_json(self, **kwargs):

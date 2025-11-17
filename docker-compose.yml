@@ -1,15 +1,35 @@
 version: '3.8'
 
 services:
+  # Redis - Shared message broker for EventBus
+  redis:
+    image: redis:7-alpine
+    container_name: quantronaute-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - trading-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # Broker A - Conservative strategy (XAUUSD, BTCUSD)
   ftmo-swing:
     build: .
     image: quantronaute:latest
     container_name: quantronaute-ftmo-swing
+    depends_on:
+      redis:
+        condition: service_healthy
     volumes:
       - ./configs/ftmo-swing:/app/config:ro  # Read-only mount
     env_file:
       - ./configs/ftmo-swing/.env.broker  # Load environment variables from file
+    environment:
+      - REDIS_URL=redis://redis:6379/0
     restart: unless-stopped
     networks:
       - trading-network
@@ -17,4 +37,5 @@ services:
 
 networks:
   trading-network:
+    name: quantronaute-network
     driver: bridge

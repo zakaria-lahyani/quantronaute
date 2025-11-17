@@ -12,9 +12,9 @@ from datetime import datetime
 from app.infrastructure.event_bus import EventBus
 from app.events.strategy_events import EntrySignalEvent, ExitSignalEvent
 from app.events.automation_events import (
-    AutomationEnabledEvent,
-    AutomationDisabledEvent,
-    AutomationStatusQueryEvent
+    ToggleAutomationEvent,
+    AutomationAction,
+    AutomationStateChangedEvent
 )
 
 
@@ -140,6 +140,83 @@ class APIService:
 
         self.event_bus.publish(event)
 
+    def execute_manual_order(
+        self,
+        symbol: str,
+        direction: str,
+        volume: float,
+        stop_loss: Optional[float] = None,
+        take_profit: Optional[float] = None,
+        comment: str = "manual_api"
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Execute a manual order directly through MT5Client.
+
+        This bypasses the event-driven architecture and directly places the order.
+        Use this for manual trading when the API is not connected to the trading system.
+
+        Args:
+            symbol: Trading symbol (e.g., "XAUUSD", "BTCUSD")
+            direction: Trade direction ("long" or "short")
+            volume: Trade volume/lot size
+            stop_loss: Optional stop loss price
+            take_profit: Optional take profit price
+            comment: Order comment (default: "manual_api")
+
+        Returns:
+            Order execution result or None if MT5Client not available
+
+        Example:
+            ```python
+            result = api_service.execute_manual_order(
+                symbol="XAUUSD",
+                direction="long",
+                volume=0.1,
+                stop_loss=2640.0,
+                take_profit=2670.0
+            )
+            ```
+        """
+        if self.mt5_client is None:
+            self.logger.error("MT5Client not available for manual order execution")
+            return None
+
+        try:
+            self.logger.info(
+                f"Executing manual {direction} order: {symbol} volume={volume} "
+                f"SL={stop_loss} TP={take_profit}"
+            )
+
+            # Execute buy or sell order based on direction
+            if direction.lower() == "long":
+                result = self.mt5_client.orders.create_buy_order(
+                    symbol=symbol.upper(),
+                    volume=volume,
+                    stop_loss=stop_loss,
+                    take_profit=take_profit,
+                    comment=comment,
+                    magic=999999  # Use a specific magic number for manual API orders
+                )
+            elif direction.lower() == "short":
+                result = self.mt5_client.orders.create_sell_order(
+                    symbol=symbol.upper(),
+                    volume=volume,
+                    stop_loss=stop_loss,
+                    take_profit=take_profit,
+                    comment=comment,
+                    magic=999999
+                )
+            else:
+                self.logger.error(f"Invalid direction: {direction}")
+                return None
+
+            self.logger.info(f"Manual order result: {result}")
+            return result
+
+        except Exception as e:
+            self.logger.error(f"Error executing manual order: {e}")
+            return None
+
     def trigger_exit_signal(
         self,
         symbol: str,
@@ -182,9 +259,13 @@ class APIService:
         """
         Enable automated trading.
 
-        Publishes AutomationEnabledEvent to activate automated strategies.
+        Publishes ToggleAutomationEvent to activate automated strategies.
         """
-        event = AutomationEnabledEvent(source="api")
+        event = ToggleAutomationEvent(
+            action=AutomationAction.ENABLE,
+            reason="API request",
+            requested_by="api"
+        )
 
         self.logger.info("Enabling automated trading via API")
 
@@ -194,10 +275,14 @@ class APIService:
         """
         Disable automated trading.
 
-        Publishes AutomationDisabledEvent to deactivate automated strategies.
+        Publishes ToggleAutomationEvent to deactivate automated strategies.
         Manual trading via API will still work.
         """
-        event = AutomationDisabledEvent(source="api")
+        event = ToggleAutomationEvent(
+            action=AutomationAction.DISABLE,
+            reason="API request",
+            requested_by="api"
+        )
 
         self.logger.info("Disabling automated trading via API")
 
@@ -207,10 +292,14 @@ class APIService:
         """
         Query current automation status.
 
-        Publishes AutomationStatusQueryEvent to request current automation state.
-        The response will be published as an AutomationStatusEvent.
+        Publishes ToggleAutomationEvent to request current automation state.
+        The response will be published as an AutomationStateChangedEvent.
         """
-        event = AutomationStatusQueryEvent(source="api")
+        event = ToggleAutomationEvent(
+            action=AutomationAction.QUERY,
+            reason="Status query",
+            requested_by="api"
+        )
 
         self.logger.debug("Querying automation status")
 
@@ -435,6 +524,111 @@ class APIService:
             return position.model_dump() if position else None
         except Exception as e:
             self.logger.error(f"Error retrieving position {ticket}: {e}")
+            return None
+
+    # ========================================================================
+    # POSITION HISTORY DATA RETRIEVAL
+    # ========================================================================
+
+    def get_closed_positions(
+        self,
+        start: Optional[str] = None,
+        end: Optional[str] = None
+    ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get all closed positions from history.
+
+        Args:
+            start: Optional start datetime (ISO format)
+            end: Optional end datetime (ISO format)
+
+        Returns:
+            List of closed position dicts or None if MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for closed positions query")
+            return None
+
+        try:
+            return self.mt5_client.history.get_closed_positions(start=start, end=end)
+        except Exception as e:
+            self.logger.error(f"Error retrieving closed positions: {e}")
+            return None
+
+    def get_closed_positions_by_symbol(
+        self,
+        symbol: str,
+        start: Optional[str] = None,
+        end: Optional[str] = None
+    ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get closed positions filtered by symbol.
+
+        Args:
+            symbol: Trading symbol
+            start: Optional start datetime (ISO format)
+            end: Optional end datetime (ISO format)
+
+        Returns:
+            List of closed position dicts or None if MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for closed positions query")
+            return None
+
+        try:
+            return self.mt5_client.history.get_closed_positions_by_symbol(
+                symbol.upper(),
+                start=start,
+                end=end
+            )
+        except Exception as e:
+            self.logger.error(f"Error retrieving closed positions for {symbol}: {e}")
+            return None
+
+    def get_closed_position_by_ticket(self, ticket: int) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific closed position by ticket number.
+
+        Args:
+            ticket: Position ticket number
+
+        Returns:
+            Closed position dict or None if not found or MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for closed position query")
+            return None
+
+        try:
+            return self.mt5_client.history.get_closed_position_by_ticket(ticket)
+        except Exception as e:
+            self.logger.error(f"Error retrieving closed position {ticket}: {e}")
+            return None
+
+    def get_trading_statistics(
+        self,
+        start: Optional[str] = None,
+        end: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get trading statistics from closed positions.
+
+        Args:
+            start: Optional start datetime (ISO format)
+            end: Optional end datetime (ISO format)
+
+        Returns:
+            Dictionary with trading statistics or None if MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for trading statistics query")
+            return None
+
+        try:
+            return self.mt5_client.history.get_trading_statistics(start=start, end=end)
+        except Exception as e:
+            self.logger.error(f"Error retrieving trading statistics: {e}")
             return None
 
     # ========================================================================

@@ -3,7 +3,7 @@
   "title": "Trading Strategy Configuration",
   "description": "Complete schema for defining trading strategies with complex rules and risk management",
   "type": "object",
-  "required": ["name", "timeframes", "entry", "risk"],
+  "required": ["name", "timeframes", "risk"],
   "properties": {
     "meta": {
       "type": "object",

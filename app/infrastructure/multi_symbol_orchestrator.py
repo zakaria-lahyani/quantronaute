@@ -13,12 +13,14 @@ Key improvements over single-symbol orchestrator:
 """
 
 import logging
+import os
 import time
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from enum import Enum
 
 from app.infrastructure.event_bus import EventBus
+from app.infrastructure.redis_event_bus import RedisEventBus
 from app.services.base import EventDrivenService, ServiceStatus, HealthStatus
 from app.infrastructure.config import SystemConfig, ConfigLoader
 from app.risk.account_stop_loss import AccountStopLossManager, AccountStopLossConfig, StopLossStatus
@@ -218,12 +220,31 @@ class MultiSymbolTradingOrchestrator:
         self.logger.info(f"Symbols: {self.symbols}")
         self.logger.info(f"Timeframes: {self.timeframes}")
 
-        # Step 1: Create shared EventBus
-        self.logger.info("Creating shared EventBus...")
-        self.event_bus = EventBus(
-            event_history_limit=self.config.get('event_history_limit', 1000),
-            log_all_events=self.config.get('log_all_events', False)
-        )
+        # Step 1: Create shared EventBus (Redis or in-memory)
+        redis_url = os.getenv("REDIS_URL")
+        if redis_url:
+            try:
+                self.logger.info(f"Creating RedisEventBus at {redis_url}...")
+                self.event_bus = RedisEventBus(
+                    redis_url=redis_url,
+                    logger=self.logger,
+                    log_all_events=self.config.get('log_all_events', False)
+                )
+                self.event_bus.start()
+                self.logger.info("✓ RedisEventBus connected and started")
+            except Exception as e:
+                self.logger.error(f"✗ Failed to connect to Redis: {e}")
+                self.logger.warning("  Falling back to in-memory EventBus")
+                self.event_bus = EventBus(
+                    event_history_limit=self.config.get('event_history_limit', 1000),
+                    log_all_events=self.config.get('log_all_events', False)
+                )
+        else:
+            self.logger.info("Creating in-memory EventBus (no Redis configured)...")
+            self.event_bus = EventBus(
+                event_history_limit=self.config.get('event_history_limit', 1000),
+                log_all_events=self.config.get('log_all_events', False)
+            )
 
         # Step 1.5: Create automation control components
         self.logger.info("Creating automation control components...")
@@ -478,6 +499,14 @@ class MultiSymbolTradingOrchestrator:
                 self.logger.info("  ✓ AutomationFileWatcher stopped")
             except Exception as e:
                 self.logger.error(f"  ✗ Error stopping AutomationFileWatcher: {e}")
+
+        # Stop RedisEventBus if it's being used
+        if isinstance(self.event_bus, RedisEventBus):
+            try:
+                self.event_bus.stop()
+                self.logger.info("  ✓ RedisEventBus stopped")
+            except Exception as e:
+                self.logger.error(f"  ✗ Error stopping RedisEventBus: {e}")
 
         self.status = OrchestratorStatus.STOPPED
         self.logger.info("\n=== ALL SERVICES STOPPED ===")

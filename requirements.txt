@@ -6,6 +6,7 @@ jsonschema>=4.0.0
 httpx>=0.25.0
 numba==0.61.2
 dotenv==0.9.9
+redis>=5.0.0
 
 # API dependencies
 fastapi>=0.104.0

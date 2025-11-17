@@ -10,22 +10,27 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
+    env_file:
+      - .env.api
     environment:
       # JWT Configuration
-      - API_SECRET_KEY=${API_SECRET_KEY:-CHANGE-THIS-IN-PRODUCTION}
-      - API_ACCESS_TOKEN_EXPIRE_MINUTES=${API_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
-      - API_REFRESH_TOKEN_EXPIRE_DAYS=${API_REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      - API_SECRET_KEY=3b6257f8b535062b9b4973458b23351ef7a93a0e6f47c9ea9397c80e98c97b85
+      - API_ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - API_REFRESH_TOKEN_EXPIRE_DAYS=7
 
       # API User Credentials (Add users here)
       # Generate hash with: python scripts/generate_api_password.py
-      - API_USER_ADMIN=${API_USER_ADMIN}
+      - API_USER_ADMIN=$$2b$$12$$w5l/SQdNIGn2Xi66s6gsQeYvlGzbcigRp4EetWDqJTlUwYbm/ekMq
 
       # Alternative: Use credentials file (optional)
       # - API_CREDENTIALS_FILE=/app/configs/api_credentials.json
 
-      # Broker Configuration (if API needs to connect to trading system)
-      - API_BASE_URL=${API_BASE_URL:-http://host.docker.internal:8000/mt5}
-      - ACCOUNT_TYPE=${ACCOUNT_TYPE:-swing}
+      # Broker Configuration (connect to MT5 bridge on host machine)
+      - API_BASE_URL=http://host.docker.internal:8000/mt5
+      - ACCOUNT_TYPE=daily
+
+      # Redis Configuration (shared EventBus)
+      - REDIS_URL=redis://quantronaute-redis:6379/0
 
     volumes:
       # Mount config files (read-only)
@@ -36,6 +41,10 @@ services:
 
     networks:
       - trading-network
+
+    # Ensure Redis is running first (external container from docker-compose.yml)
+    external_links:
+      - quantronaute-redis:redis
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
