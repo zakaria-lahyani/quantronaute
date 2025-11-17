@@ -31,14 +31,21 @@ class ModifyPositionRequest(BaseModel):
 
 
 class PlaceOrderRequest(BaseModel):
-    """Request to place a new order."""
+    """
+    Request to place a smart order (one-click trading).
+
+    The system will automatically calculate:
+    - Entry price (market price)
+    - Position size (based on risk configuration)
+    - Stop loss (based on ATR or configured method)
+    - Take profit targets (single or multiple based on scaling config)
+    - Apply position scaling if configured
+    - Validate against risk limits
+    """
     symbol: str = Field(..., description="Trading symbol")
     direction: str = Field(..., description="Trade direction (long/short)")
-    volume: float = Field(..., description="Position size in lots")
-    entry_price: float = Field(..., description="Entry price")
-    stop_loss: float = Field(..., description="Stop loss price")
-    take_profit: Optional[float] = Field(None, description="Take profit price")
-    strategy_name: Optional[str] = Field(None, description="Strategy name for tracking")
+    strategy_name: Optional[str] = Field("manual", description="Strategy config to use for risk/sizing calculations")
+    risk_override: Optional[float] = Field(None, description="Override risk percentage for this specific trade")
 
 
 class UpdateRiskConfigRequest(BaseModel):

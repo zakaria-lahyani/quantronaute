@@ -61,27 +61,28 @@ class ModifyPositionCommandEvent(APICommandEvent):
 
 
 @dataclass(frozen=True, kw_only=True)
-class PlaceOrderCommandEvent(APICommandEvent):
+class PlaceSmartOrderCommandEvent(APICommandEvent):
     """
-    Command to place a new order.
+    Command to place a smart order (one-click trading).
+
+    The system will handle all calculations:
+    - Entry price (market)
+    - Position sizing (based on risk)
+    - SL calculation (based on ATR/config)
+    - TP calculation (with scaling if configured)
+    - Risk validation
 
     Attributes:
         correlation_id: Unique ID to match with response
         symbol: Trading symbol
-        direction: Trade direction
-        volume: Position size
-        entry_price: Entry price
-        stop_loss: Stop loss price
-        take_profit: Take profit price
-        strategy_name: Strategy name for tracking
+        direction: Trade direction (long/short)
+        strategy_name: Strategy config to use for calculations (default: "manual")
+        risk_override: Optional risk percentage override for this trade
     """
     symbol: str
     direction: str
-    volume: float
-    entry_price: float
-    stop_loss: float
-    take_profit: Optional[float] = None
-    strategy_name: Optional[str] = None
+    strategy_name: str = "manual"
+    risk_override: Optional[float] = None
 
 
 @dataclass(frozen=True, kw_only=True)
