@@ -1,0 +1,87 @@
+# Manual Trading Strategy Template
+# Copy this file to configs/{broker}/strategies/{symbol}/manual.yaml
+# and customize for each symbol you want to trade manually via API
+name: "manual"
+meta:
+  version: "1.0.0"
+  author: "system"
+  description: "Manual trading configuration - used for API-triggered signals"
+  created_at: "2025-11-17T00:00:00Z"
+
+# Required but not used (manual signals bypass strategy evaluation)
+timeframes: ["1"]
+
+entry:
+  long:
+    mode: all
+    conditions: []
+  short:
+    mode: all
+    conditions: []
+
+exit:
+  long:
+    mode: all
+    conditions: []
+  short:
+    mode: all
+    conditions: []
+
+# ============================================================================
+# RISK CONFIGURATION - CUSTOMIZE THIS FOR YOUR MANUAL TRADING
+# ============================================================================
+risk:
+  # Position Sizing
+  # ---------------
+  position_sizing:
+    type: fixed         # fixed | percentage | monetary
+    value: 0.5          # Depends on type:
+                        #   fixed: lots per trade (e.g., 0.5 = 0.5 lots)
+                        #   percentage: % of account (e.g., 1.0 = 1% of balance)
+                        #   monetary: $ amount to risk (e.g., 100.0 = $100 per trade)
+
+  # Stop Loss
+  # ---------
+  sl:
+    type: monetary      # fixed | monetary | atr | percentage
+    value: 500.0        # Depends on type:
+                        #   fixed: pips (e.g., 100.0 = 100 pips)
+                        #   monetary: $ amount (e.g., 500.0 = $500 risk)
+                        #   atr: multiplier (e.g., 1.5 = 1.5x ATR)
+                        #   percentage: % of entry (e.g., 2.0 = 2%)
+
+  # Take Profit
+  # -----------
+  tp:
+    # Option 1: Single Target
+    # type: fixed         # fixed | monetary | rr (risk:reward)
+    # value: 1000.0       # Depends on type:
+    #                     #   fixed: pips (e.g., 200.0 = 200 pips)
+    #                     #   monetary: $ amount (e.g., 1000.0 = $1000 profit)
+    #                     #   rr: ratio (e.g., 2.0 = 2:1 risk:reward)
+
+    # Option 2: Multiple Targets (scaling out)
+    type: multi_target
+    targets:
+      - value: 1.0        # 1:1 R:R
+        percent: 50       # Close 50% of position
+        move_stop: true   # Move SL to breakeven after hitting this target
+      - value: 2.0        # 2:1 R:R
+        percent: 50       # Close remaining 50%
+        move_stop: false
+
+# ============================================================================
+# OPTIONAL: Position Scaling
+# ============================================================================
+# Uncomment to enable position scaling (multiple entries)
+# If not specified, uses the default scaling from broker config
+#
+# scaling:
+#   enabled: true
+#   num_entries: 2          # Number of separate entries
+#   distribution: [60, 40]  # % of total position per entry
+#                           # Must sum to 100
+#
+# Example: If position_sizing.value = 1.0 lot and num_entries = 2:
+#   Entry 1: 0.6 lots (60%)
+#   Entry 2: 0.4 lots (40%)
