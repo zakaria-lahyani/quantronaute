@@ -25,22 +25,34 @@ async def get_account_summary(
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Account monitoring not yet implemented",
-      "note": "Will provide balance, equity, margin, profit, and position count"
+      "balance": 10000.50,
+      "equity": 10250.75,
+      "margin": 500.00,
+      "margin_free": 9750.75,
+      "margin_level": 2050.15,
+      "profit": 250.25,
+      "currency": "USD",
+      "leverage": 100
     }
     ```
 
-    **Future Implementation**:
-    - Query MT5Client for account information
-    - Return balance, equity, margin, profit
-    - Cache for 5 seconds to reduce broker API load
-    """
-    return {
-        "status": "not_implemented",
-        "message": "Account monitoring not yet implemented",
-        "note": "Will provide balance, equity, margin, profit, and position count"
+    If MT5Client not available:
+    ```json
+    {
+      "error": "Account data not available",
+      "reason": "MT5Client not connected to API service"
     }
+    ```
+    """
+    summary = api_service.get_account_summary()
+
+    if summary is None:
+        return {
+            "error": "Account data not available",
+            "reason": "MT5Client not connected to API service"
+        }
+
+    return summary
 
 
 @router.get("/balance")
@@ -56,15 +68,19 @@ async def get_account_balance(
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Account balance monitoring not yet implemented"
+      "balance": 10000.50
     }
     ```
     """
-    return {
-        "status": "not_implemented",
-        "message": "Account balance monitoring not yet implemented"
-    }
+    balance = api_service.get_account_balance()
+
+    if balance is None:
+        return {
+            "error": "Balance data not available",
+            "reason": "MT5Client not connected to API service"
+        }
+
+    return {"balance": balance}
 
 
 @router.get("/equity")
@@ -80,15 +96,19 @@ async def get_account_equity(
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Account equity monitoring not yet implemented"
+      "equity": 10250.75
     }
     ```
     """
-    return {
-        "status": "not_implemented",
-        "message": "Account equity monitoring not yet implemented"
-    }
+    equity_data = api_service.get_account_equity()
+
+    if equity_data is None:
+        return {
+            "error": "Equity data not available",
+            "reason": "MT5Client not connected to API service"
+        }
+
+    return equity_data
 
 
 @router.get("/margin")
@@ -104,12 +124,18 @@ async def get_margin_info(
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Margin monitoring not yet implemented"
+      "margin": 500.00,
+      "margin_free": 9750.75,
+      "margin_level": 2050.15
     }
     ```
     """
-    return {
-        "status": "not_implemented",
-        "message": "Margin monitoring not yet implemented"
-    }
+    margin_data = api_service.get_margin_info()
+
+    if margin_data is None:
+        return {
+            "error": "Margin data not available",
+            "reason": "MT5Client not connected to API service"
+        }
+
+    return margin_data

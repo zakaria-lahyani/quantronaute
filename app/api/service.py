@@ -36,7 +36,9 @@ class APIService:
     def __init__(
         self,
         event_bus: EventBus,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
+        mt5_client: Optional[Any] = None,
+        orchestrator: Optional[Any] = None
     ):
         """
         Initialize the API service.
@@ -44,11 +46,17 @@ class APIService:
         Args:
             event_bus: EventBus instance for publishing/subscribing to events
             logger: Optional logger instance
+            mt5_client: Optional MT5Client instance for account/position queries
+            orchestrator: Optional MultiSymbolOrchestrator instance for accessing services
         """
         self.event_bus = event_bus
         self.logger = logger or logging.getLogger(__name__)
         self._running = False
         self._startup_time: Optional[datetime] = None
+
+        # Optional references to trading system components
+        self.mt5_client = mt5_client
+        self.orchestrator = orchestrator
 
         # Event subscriptions for monitoring
         self._subscription_ids: List[str] = []
@@ -274,6 +282,176 @@ class APIService:
             List of recent events
         """
         return self.event_bus.get_event_history(event_type, limit)
+
+    # ========================================================================
+    # ACCOUNT DATA RETRIEVAL
+    # ========================================================================
+
+    def get_account_info(self) -> Optional[Dict[str, Any]]:
+        """
+        Get full account information from MT5Client.
+
+        Returns:
+            Account information dict or None if MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for account info query")
+            return None
+
+        try:
+            return self.mt5_client.account.get_account_info()
+        except Exception as e:
+            self.logger.error(f"Error retrieving account info: {e}")
+            return None
+
+    def get_account_summary(self) -> Optional[Dict[str, Any]]:
+        """
+        Get account summary with key metrics.
+
+        Returns:
+            Account summary dict or None if MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for account summary query")
+            return None
+
+        try:
+            return self.mt5_client.account.get_account_summary()
+        except Exception as e:
+            self.logger.error(f"Error retrieving account summary: {e}")
+            return None
+
+    def get_account_balance(self) -> Optional[float]:
+        """
+        Get current account balance.
+
+        Returns:
+            Account balance or None if MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for balance query")
+            return None
+
+        try:
+            return self.mt5_client.account.get_balance()
+        except Exception as e:
+            self.logger.error(f"Error retrieving account balance: {e}")
+            return None
+
+    def get_account_equity(self) -> Optional[Dict[str, float]]:
+        """
+        Get current account equity.
+
+        Returns:
+            Equity dict or None if MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for equity query")
+            return None
+
+        try:
+            return self.mt5_client.account.get_equity()
+        except Exception as e:
+            self.logger.error(f"Error retrieving account equity: {e}")
+            return None
+
+    def get_margin_info(self) -> Optional[Dict[str, float]]:
+        """
+        Get margin information.
+
+        Returns:
+            Margin info dict or None if MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for margin query")
+            return None
+
+        try:
+            return self.mt5_client.account.get_margin_info()
+        except Exception as e:
+            self.logger.error(f"Error retrieving margin info: {e}")
+            return None
+
+    # ========================================================================
+    # INDICATOR DATA RETRIEVAL
+    # ========================================================================
+
+    def get_indicator_service(self, symbol: str):
+        """
+        Get IndicatorCalculationService for a specific symbol.
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            IndicatorCalculationService instance or None if not available
+        """
+        if self.orchestrator is None:
+            self.logger.warning(f"Orchestrator not available for indicator query: {symbol}")
+            return None
+
+        try:
+            # Access the indicator service for this symbol from orchestrator
+            return self.orchestrator.get_service(symbol, "indicator_calculation")
+        except Exception as e:
+            self.logger.error(f"Error accessing indicator service for {symbol}: {e}")
+            return None
+
+    def get_latest_indicators(self, symbol: str, timeframe: str) -> Optional[Dict[str, Any]]:
+        """
+        Get latest indicator values for a symbol and timeframe.
+
+        Args:
+            symbol: Trading symbol
+            timeframe: Timeframe (e.g., "M1", "H1", "D1")
+
+        Returns:
+            Dictionary of indicator values or None if not available
+        """
+        indicator_service = self.get_indicator_service(symbol)
+        if indicator_service is None:
+            return None
+
+        try:
+            latest_row = indicator_service.get_latest_row(timeframe)
+            if latest_row is None:
+                self.logger.warning(f"No indicator data available for {symbol} {timeframe}")
+                return None
+
+            # Convert pandas Series to dict
+            return latest_row.to_dict()
+        except Exception as e:
+            self.logger.error(f"Error retrieving indicators for {symbol} {timeframe}: {e}")
+            return None
+
+    def get_all_indicators_for_symbol(self, symbol: str) -> Optional[Dict[str, Dict[str, Any]]]:
+        """
+        Get latest indicator values for all timeframes of a symbol.
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            Dictionary mapping timeframe -> indicator values
+        """
+        indicator_service = self.get_indicator_service(symbol)
+        if indicator_service is None:
+            return None
+
+        try:
+            # Get configured timeframes from the service
+            timeframes = indicator_service.config.get("timeframes", [])
+
+            result = {}
+            for tf in timeframes:
+                indicators = self.get_latest_indicators(symbol, tf)
+                if indicators:
+                    result[tf] = indicators
+
+            return result if result else None
+        except Exception as e:
+            self.logger.error(f"Error retrieving all indicators for {symbol}: {e}")
+            return None
 
     @property
     def is_running(self) -> bool:

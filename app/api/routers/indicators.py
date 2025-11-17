@@ -29,22 +29,51 @@ async def get_symbol_indicators(
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Indicator monitoring not yet implemented",
-      "symbol": "XAUUSD"
+      "symbol": "XAUUSD",
+      "timestamp": "2025-11-17T10:30:00Z",
+      "timeframes": {
+        "M1": {
+          "close": 2650.25,
+          "sma_50": 2648.10,
+          "ema_21": 2649.50,
+          "rsi_14": 58.3,
+          "atr_14": 1.25
+        },
+        "H1": {
+          "close": 2650.25,
+          "sma_50": 2645.00,
+          "ema_21": 2647.80,
+          "rsi_14": 62.1,
+          "atr_14": 3.50
+        }
+      }
     }
     ```
 
-    **Future Implementation**:
-    - Query IndicatorCalculationService for current values
-    - Return indicators for all configured timeframes
-    - Include timestamp for data freshness
-    - Cache for 5 seconds to reduce load
+    If indicator service not available:
+    ```json
+    {
+      "error": "Indicator data not available",
+      "reason": "Orchestrator not connected or symbol not configured",
+      "symbol": "XAUUSD"
+    }
+    ```
     """
+    from datetime import datetime, timezone
+
+    indicators = api_service.get_all_indicators_for_symbol(symbol.upper())
+
+    if indicators is None:
+        return {
+            "error": "Indicator data not available",
+            "reason": "Orchestrator not connected or symbol not configured",
+            "symbol": symbol.upper()
+        }
+
     return {
-        "status": "not_implemented",
-        "message": "Indicator monitoring not yet implemented",
-        "symbol": symbol.upper()
+        "symbol": symbol.upper(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timeframes": indicators
     }
 
 
@@ -67,18 +96,36 @@ async def get_symbol_timeframe_indicators(
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Indicator monitoring not yet implemented",
       "symbol": "XAUUSD",
-      "timeframe": "H1"
+      "timeframe": "H1",
+      "timestamp": "2025-11-17T10:30:00Z",
+      "indicators": {
+        "close": 2650.25,
+        "sma_50": 2645.00,
+        "ema_21": 2647.80,
+        "rsi_14": 62.1,
+        "atr_14": 3.50
+      }
     }
     ```
     """
+    from datetime import datetime, timezone
+
+    indicators = api_service.get_latest_indicators(symbol.upper(), timeframe.upper())
+
+    if indicators is None:
+        return {
+            "error": "Indicator data not available",
+            "reason": "Orchestrator not connected or symbol/timeframe not configured",
+            "symbol": symbol.upper(),
+            "timeframe": timeframe.upper()
+        }
+
     return {
-        "status": "not_implemented",
-        "message": "Indicator monitoring not yet implemented",
         "symbol": symbol.upper(),
-        "timeframe": timeframe.upper()
+        "timeframe": timeframe.upper(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "indicators": indicators
     }
 
 
@@ -98,25 +145,57 @@ async def get_specific_indicator(
     **Path Parameters**:
     - `symbol`: Trading symbol (e.g., XAUUSD, EURUSD)
     - `timeframe`: Timeframe (e.g., M1, M5, M15, H1, H4, D1)
-    - `indicator`: Indicator name (e.g., sma, ema, rsi, atr, macd)
+    - `indicator`: Indicator name (e.g., sma_50, ema_21, rsi_14, atr_14)
 
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Indicator monitoring not yet implemented",
       "symbol": "XAUUSD",
       "timeframe": "H1",
-      "indicator": "RSI"
+      "indicator": "rsi_14",
+      "value": 62.1,
+      "timestamp": "2025-11-17T10:30:00Z"
     }
     ```
     """
+    from datetime import datetime, timezone
+
+    indicators = api_service.get_latest_indicators(symbol.upper(), timeframe.upper())
+
+    if indicators is None:
+        return {
+            "error": "Indicator data not available",
+            "reason": "Orchestrator not connected or symbol/timeframe not configured",
+            "symbol": symbol.upper(),
+            "timeframe": timeframe.upper(),
+            "indicator": indicator.lower()
+        }
+
+    # Try to find the indicator (case-insensitive)
+    indicator_lower = indicator.lower()
+    indicator_value = None
+
+    for key, value in indicators.items():
+        if key.lower() == indicator_lower:
+            indicator_value = value
+            break
+
+    if indicator_value is None:
+        return {
+            "error": "Indicator not found",
+            "reason": f"Indicator '{indicator}' not available in calculated indicators",
+            "symbol": symbol.upper(),
+            "timeframe": timeframe.upper(),
+            "indicator": indicator.lower(),
+            "available_indicators": list(indicators.keys())
+        }
+
     return {
-        "status": "not_implemented",
-        "message": "Indicator monitoring not yet implemented",
         "symbol": symbol.upper(),
         "timeframe": timeframe.upper(),
-        "indicator": indicator.upper()
+        "indicator": indicator.lower(),
+        "value": indicator_value,
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 
