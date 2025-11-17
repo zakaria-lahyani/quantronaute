@@ -5,16 +5,41 @@ This module provides dependency injection functions for FastAPI endpoints.
 """
 
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordBearer
 
 from app.api.auth import verify_token
+from app.api.service import APIService
 
 # HTTPBearer for general API usage
 security = HTTPBearer()
 
 # OAuth2PasswordBearer for Swagger UI compatibility
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login/form")
+
+
+def get_api_service(request: Request) -> APIService:
+    """
+    Dependency to get APIService from app state.
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        APIService instance
+
+    Raises:
+        HTTPException: If API service is not available
+    """
+    api_service = getattr(request.app.state, "api_service", None)
+
+    if api_service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="API service not available"
+        )
+
+    return api_service
 
 
 async def get_current_user(
