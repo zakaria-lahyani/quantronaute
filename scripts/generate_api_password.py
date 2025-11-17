@@ -17,9 +17,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
 
 
 def main():
@@ -41,8 +39,10 @@ def main():
         print("Error: Passwords do not match")
         return
 
-    # Generate hash
-    hashed = pwd_context.hash(password)
+    # Generate hash using bcrypt
+    password_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
 
     print("\n=== Generated Hash ===")
     print(f'Username: {username}')

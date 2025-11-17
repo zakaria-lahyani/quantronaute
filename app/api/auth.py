@@ -9,11 +9,8 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT configuration - Load from environment with secure defaults
 SECRET_KEY = os.getenv("API_SECRET_KEY", "CHANGE-THIS-IN-PRODUCTION-USE-LONG-RANDOM-STRING")
@@ -26,29 +23,39 @@ logger = logging.getLogger(__name__)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Verify a password against its hash.
+    Verify a password against its hash using bcrypt.
 
     Args:
         plain_password: Plain text password
-        hashed_password: Hashed password to compare against
+        hashed_password: Bcrypt hashed password to compare against
 
     Returns:
         bool: True if password matches
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    # Convert strings to bytes
+    password_bytes = plain_password.encode('utf-8')
+    hashed_bytes = hashed_password.encode('utf-8')
+
+    return bcrypt.checkpw(password_bytes, hashed_bytes)
 
 
 def get_password_hash(password: str) -> str:
     """
-    Hash a password.
+    Hash a password using bcrypt.
 
     Args:
         password: Plain text password
 
     Returns:
-        str: Hashed password
+        str: Bcrypt hashed password
     """
-    return pwd_context.hash(password)
+    # Convert password to bytes and generate hash
+    password_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+
+    # Return as string
+    return hashed.decode('utf-8')
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

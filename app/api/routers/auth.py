@@ -25,32 +25,50 @@ from app.api.auth import (
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Credential storage path
-CREDENTIALS_FILE = os.getenv(
-    "API_CREDENTIALS_FILE",
-    "configs/api_credentials.json"
-)
+# Credential storage - Support both JSON file and environment variables
+CREDENTIALS_FILE = os.getenv("API_CREDENTIALS_FILE", "")
+# Environment variable format: API_USER_<USERNAME>=<BCRYPT_HASH>
+# Example: API_USER_ADMIN=$2b$12$abcdef...
 
 
 def load_credentials() -> dict:
     """
-    Load user credentials from JSON file.
+    Load user credentials from JSON file or environment variables.
+
+    Priority:
+    1. Environment variables (API_USER_<USERNAME>=<hash>)
+    2. JSON file (if API_CREDENTIALS_FILE is set)
 
     Returns:
         dict: Dictionary mapping usernames to hashed passwords
     """
-    credentials_path = Path(CREDENTIALS_FILE)
+    credentials = {}
 
-    if not credentials_path.exists():
-        logger.warning(f"Credentials file not found at {CREDENTIALS_FILE}")
-        return {}
+    # Load from environment variables (API_USER_*)
+    for key, value in os.environ.items():
+        if key.startswith("API_USER_"):
+            username = key[9:].lower()  # Remove "API_USER_" prefix and lowercase
+            credentials[username] = value
+            logger.info(f"Loaded credentials for user '{username}' from environment")
 
-    try:
-        with open(credentials_path, "r") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Failed to load credentials: {e}")
-        return {}
+    # Load from JSON file if specified and exists
+    if CREDENTIALS_FILE:
+        credentials_path = Path(CREDENTIALS_FILE)
+        if credentials_path.exists():
+            try:
+                with open(credentials_path, "r") as f:
+                    file_creds = json.load(f)
+                    credentials.update(file_creds)
+                    logger.info(f"Loaded {len(file_creds)} credentials from {CREDENTIALS_FILE}")
+            except Exception as e:
+                logger.error(f"Failed to load credentials from file: {e}")
+        else:
+            logger.warning(f"Credentials file not found at {CREDENTIALS_FILE}")
+
+    if not credentials:
+        logger.warning("No API credentials configured! Set API_USER_* environment variables or API_CREDENTIALS_FILE")
+
+    return credentials
 
 
 def authenticate_user(username: str, password: str) -> Optional[str]:
@@ -66,11 +84,14 @@ def authenticate_user(username: str, password: str) -> Optional[str]:
     """
     credentials = load_credentials()
 
-    if username not in credentials:
+    # Normalize username to lowercase for case-insensitive matching
+    username_lower = username.lower()
+
+    if username_lower not in credentials:
         logger.warning(f"Authentication failed: User '{username}' not found")
         return None
 
-    hashed_password = credentials[username]
+    hashed_password = credentials[username_lower]
 
     if not verify_password(password, hashed_password):
         logger.warning(f"Authentication failed: Invalid password for user '{username}'")

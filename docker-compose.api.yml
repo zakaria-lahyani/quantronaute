@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # Manual Trading API Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: quantronaute-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # JWT Configuration
+      - API_SECRET_KEY=${API_SECRET_KEY:-CHANGE-THIS-IN-PRODUCTION}
+      - API_ACCESS_TOKEN_EXPIRE_MINUTES=${API_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - API_REFRESH_TOKEN_EXPIRE_DAYS=${API_REFRESH_TOKEN_EXPIRE_DAYS:-7}
+
+      # API User Credentials (Add users here)
+      # Generate hash with: python scripts/generate_api_password.py
+      - API_USER_ADMIN=${API_USER_ADMIN}
+
+      # Alternative: Use credentials file (optional)
+      # - API_CREDENTIALS_FILE=/app/configs/api_credentials.json
+
+      # Broker Configuration (if API needs to connect to trading system)
+      - API_BASE_URL=${API_BASE_URL:-http://host.docker.internal:8000/mt5}
+      - ACCOUNT_TYPE=${ACCOUNT_TYPE:-swing}
+
+    volumes:
+      # Mount config files (read-only)
+      - ./configs:/app/configs:ro
+
+      # Mount logs directory
+      - ./logs:/app/logs
+
+    networks:
+      - trading-network
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  trading-network:
+    name: quantronaute-network
+    driver: bridge

@@ -22,17 +22,8 @@ from app.api.auth import (
 
 
 class TestPasswordHashing:
-    """
-    Tests for password hashing functions.
+    """Tests for password hashing functions using bcrypt directly."""
 
-    NOTE: These tests may fail with Python 3.13+ due to passlib/bcrypt compatibility issues.
-    The actual bcrypt functionality works fine in production - this is just a testing issue.
-    """
-
-    @pytest.mark.skipif(
-        True,  # Skip for now due to passlib/bcrypt issue with Python 3.13
-        reason="passlib/bcrypt compatibility issue with Python 3.13+"
-    )
     def test_hash_password(self):
         """Test password hashing."""
         password = "test123"
@@ -43,10 +34,6 @@ class TestPasswordHashing:
         # Hash should start with bcrypt identifier
         assert hashed.startswith("$2b$")
 
-    @pytest.mark.skipif(
-        True,
-        reason="passlib/bcrypt compatibility issue with Python 3.13+"
-    )
     def test_verify_correct_password(self):
         """Test verifying correct password."""
         password = "test123"
@@ -54,10 +41,6 @@ class TestPasswordHashing:
 
         assert verify_password(password, hashed) is True
 
-    @pytest.mark.skipif(
-        True,
-        reason="passlib/bcrypt compatibility issue with Python 3.13+"
-    )
     def test_verify_incorrect_password(self):
         """Test verifying incorrect password."""
         password = "test123"
@@ -66,10 +49,6 @@ class TestPasswordHashing:
 
         assert verify_password(wrong_password, hashed) is False
 
-    @pytest.mark.skipif(
-        True,
-        reason="passlib/bcrypt compatibility issue with Python 3.13+"
-    )
     def test_different_hashes_for_same_password(self):
         """Test that same password generates different hashes (salt)."""
         password = "test123"
