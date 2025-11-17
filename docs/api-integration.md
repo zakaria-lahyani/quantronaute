@@ -200,7 +200,65 @@ curl http://localhost:8080/indicators/XAUUSD/H1 \
 # }
 ```
 
-**3. Test Manual Signals** (should work in both modes):
+**3. Test Position Endpoints**:
+```bash
+# Get all open positions
+curl http://localhost:8080/positions \
+  -H "Authorization: Bearer $TOKEN" | jq
+
+# Expected: List of positions
+# {
+#   "positions": [
+#     {
+#       "ticket": 123456,
+#       "symbol": "XAUUSD",
+#       "type": 0,
+#       "volume": 0.1,
+#       "price_open": 2650.25,
+#       "price_current": 2655.80,
+#       "profit": 55.50,
+#       ...
+#     }
+#   ],
+#   "total_positions": 1,
+#   "total_profit": 55.50
+# }
+
+# Get positions for specific symbol
+curl http://localhost:8080/positions/XAUUSD \
+  -H "Authorization: Bearer $TOKEN" | jq
+```
+
+**4. Test Strategy Endpoints**:
+```bash
+# List all strategies for XAUUSD
+curl http://localhost:8080/strategies/XAUUSD \
+  -H "Authorization: Bearer $TOKEN" | jq
+
+# Expected: List of strategies
+# {
+#   "symbol": "XAUUSD",
+#   "strategies": ["manual", "breakout", "trend_follow"],
+#   "total_strategies": 3
+# }
+
+# Get strategy metrics
+curl http://localhost:8080/strategies/XAUUSD/metrics \
+  -H "Authorization: Bearer $TOKEN" | jq
+
+# Expected: Strategy metrics
+# {
+#   "symbol": "XAUUSD",
+#   "metrics": {
+#     "strategies_evaluated": 1250,
+#     "entry_signals_generated": 15,
+#     "automation_enabled": true,
+#     ...
+#   }
+# }
+```
+
+**5. Test Manual Signals** (should work in both modes):
 ```bash
 # Trigger entry signal
 curl -X POST http://localhost:8080/signals/entry \
@@ -266,13 +324,16 @@ curl -X POST http://localhost:8080/signals/entry \
 | GET /indicators/{symbol} | ❌ | ✅ | Needs Orchestrator |
 | GET /indicators/{symbol}/{tf} | ❌ | ✅ | Needs Orchestrator |
 | GET /indicators/{symbol}/{tf}/{ind} | ❌ | ✅ | Needs Orchestrator |
-| GET /positions | ❌ | 🔄 | Needs MT5Client (pending implementation) |
-| GET /strategies | ❌ | 🔄 | Needs Orchestrator (pending implementation) |
+| GET /positions | ❌ | ✅ | Needs MT5Client |
+| GET /positions/{symbol} | ❌ | ✅ | Needs MT5Client |
+| GET /positions/ticket/{ticket} | ❌ | ✅ | Needs MT5Client |
+| GET /strategies/{symbol} | ❌ | ✅ | Needs Orchestrator |
+| GET /strategies/{symbol}/{name} | ❌ | ✅ | Needs Orchestrator |
+| GET /strategies/{symbol}/metrics | ❌ | ✅ | Needs Orchestrator |
 
 Legend:
 - ✅ Fully working
 - ❌ Returns error (service not available)
-- 🔄 Pending implementation
 
 ---
 
@@ -337,9 +398,10 @@ After integration:
 
 1. ✅ **Account Monitoring**: Test all account endpoints
 2. ✅ **Indicator Monitoring**: Test indicator endpoints for all symbols
-3. 🔄 **Position Management**: Implement position query methods in APIService
-4. 🔄 **Strategy Monitoring**: Implement strategy condition evaluation
-5. 🔄 **Configuration Management**: Implement config read/write endpoints
+3. ✅ **Position Management**: Test position query endpoints
+4. ✅ **Strategy Monitoring**: Test strategy listing and metrics endpoints
+5. 🔄 **Strategy Condition Evaluation**: Implement real-time condition evaluation (advanced feature)
+6. 🔄 **Configuration Management**: Implement config read/write endpoints
 
 ---
 

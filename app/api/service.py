@@ -373,6 +373,166 @@ class APIService:
             return None
 
     # ========================================================================
+    # POSITION DATA RETRIEVAL
+    # ========================================================================
+
+    def get_open_positions(self) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get all currently open trading positions.
+
+        Returns:
+            List of position dicts or None if MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for positions query")
+            return None
+
+        try:
+            positions = self.mt5_client.positions.get_open_positions()
+            # Convert Position models to dicts
+            return [pos.model_dump() for pos in positions]
+        except Exception as e:
+            self.logger.error(f"Error retrieving open positions: {e}")
+            return None
+
+    def get_positions_by_symbol(self, symbol: str) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get all open positions filtered by trading symbol.
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            List of position dicts or None if MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for positions query")
+            return None
+
+        try:
+            positions = self.mt5_client.positions.get_positions_by_symbol(symbol.upper())
+            return [pos.model_dump() for pos in positions]
+        except Exception as e:
+            self.logger.error(f"Error retrieving positions for {symbol}: {e}")
+            return None
+
+    def get_position_by_ticket(self, ticket: int) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific open position by its ticket number.
+
+        Args:
+            ticket: Unique ticket ID of the position
+
+        Returns:
+            Position dict or None if not found or MT5Client not available
+        """
+        if self.mt5_client is None:
+            self.logger.warning("MT5Client not available for position query")
+            return None
+
+        try:
+            position = self.mt5_client.positions.get_position_by_ticket(ticket)
+            return position.model_dump() if position else None
+        except Exception as e:
+            self.logger.error(f"Error retrieving position {ticket}: {e}")
+            return None
+
+    # ========================================================================
+    # STRATEGY EVALUATION DATA RETRIEVAL
+    # ========================================================================
+
+    def get_strategy_service(self, symbol: str):
+        """
+        Get StrategyEvaluationService for a specific symbol.
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            StrategyEvaluationService instance or None if not available
+        """
+        if self.orchestrator is None:
+            self.logger.warning(f"Orchestrator not available for strategy query: {symbol}")
+            return None
+
+        try:
+            return self.orchestrator.get_service(symbol, "strategy_evaluation")
+        except Exception as e:
+            self.logger.error(f"Error accessing strategy service for {symbol}: {e}")
+            return None
+
+    def get_available_strategies(self, symbol: str) -> Optional[List[str]]:
+        """
+        Get list of available strategy names for a symbol.
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            List of strategy names or None if not available
+        """
+        strategy_service = self.get_strategy_service(symbol)
+        if strategy_service is None:
+            return None
+
+        try:
+            return strategy_service.get_available_strategies()
+        except Exception as e:
+            self.logger.error(f"Error retrieving available strategies for {symbol}: {e}")
+            return None
+
+    def get_strategy_info(self, symbol: str, strategy_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Get strategy information for a specific symbol and strategy.
+
+        Args:
+            symbol: Trading symbol
+            strategy_name: Name of the strategy
+
+        Returns:
+            Strategy info dict or None if not available
+        """
+        strategy_service = self.get_strategy_service(symbol)
+        if strategy_service is None:
+            return None
+
+        try:
+            strategy_info = strategy_service.get_strategy_info(strategy_name)
+            if strategy_info is None:
+                return None
+
+            # Convert to dict if it's an object
+            if hasattr(strategy_info, 'model_dump'):
+                return strategy_info.model_dump()
+            elif hasattr(strategy_info, '__dict__'):
+                return strategy_info.__dict__
+            else:
+                return {"info": str(strategy_info)}
+        except Exception as e:
+            self.logger.error(f"Error retrieving strategy info for {symbol}/{strategy_name}: {e}")
+            return None
+
+    def get_strategy_metrics(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """
+        Get strategy evaluation metrics for a symbol.
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            Strategy metrics dict or None if not available
+        """
+        strategy_service = self.get_strategy_service(symbol)
+        if strategy_service is None:
+            return None
+
+        try:
+            return strategy_service.get_metrics()
+        except Exception as e:
+            self.logger.error(f"Error retrieving strategy metrics for {symbol}: {e}")
+            return None
+
+    # ========================================================================
     # INDICATOR DATA RETRIEVAL
     # ========================================================================
 

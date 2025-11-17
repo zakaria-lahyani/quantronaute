@@ -25,21 +25,52 @@ async def get_positions(
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Position monitoring not yet implemented",
-      "note": "Will return list of all open positions with ticket, symbol, type, volume, profit, etc."
+      "positions": [
+        {
+          "ticket": 123456,
+          "symbol": "XAUUSD",
+          "type": 0,
+          "volume": 0.1,
+          "price_open": 2650.25,
+          "price_current": 2655.80,
+          "profit": 55.50,
+          "swap": -2.50,
+          "commission": -5.00,
+          "sl": 2640.00,
+          "tp": 2670.00,
+          "time": "2025-11-17T08:30:00Z",
+          "magic": 12345,
+          "comment": "manual"
+        }
+      ],
+      "total_positions": 1,
+      "total_profit": 48.00
     }
     ```
 
-    **Future Implementation**:
-    - Query position monitor service for current positions
-    - Return comprehensive position details
-    - Include unrealized P/L, entry price, current price
+    If MT5Client not available:
+    ```json
+    {
+      "error": "Position data not available",
+      "reason": "MT5Client not connected to API service"
+    }
+    ```
     """
+    positions = api_service.get_open_positions()
+
+    if positions is None:
+        return {
+            "error": "Position data not available",
+            "reason": "MT5Client not connected to API service"
+        }
+
+    # Calculate summary metrics
+    total_profit = sum(pos.get("profit", 0) for pos in positions)
+
     return {
-        "status": "not_implemented",
-        "message": "Position monitoring not yet implemented",
-        "note": "Will return list of all open positions"
+        "positions": positions,
+        "total_positions": len(positions),
+        "total_profit": total_profit
     }
 
 
@@ -60,16 +91,39 @@ async def get_positions_by_symbol(
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Position monitoring not yet implemented",
+      "symbol": "XAUUSD",
+      "positions": [...],
+      "total_positions": 2,
+      "total_profit": 150.25
+    }
+    ```
+
+    If MT5Client not available:
+    ```json
+    {
+      "error": "Position data not available",
+      "reason": "MT5Client not connected to API service",
       "symbol": "XAUUSD"
     }
     ```
     """
+    positions = api_service.get_positions_by_symbol(symbol)
+
+    if positions is None:
+        return {
+            "error": "Position data not available",
+            "reason": "MT5Client not connected to API service",
+            "symbol": symbol.upper()
+        }
+
+    # Calculate summary metrics
+    total_profit = sum(pos.get("profit", 0) for pos in positions)
+
     return {
-        "status": "not_implemented",
-        "message": "Position monitoring not yet implemented",
-        "symbol": symbol.upper()
+        "symbol": symbol.upper(),
+        "positions": positions,
+        "total_positions": len(positions),
+        "total_profit": total_profit
     }
 
 
@@ -90,17 +144,40 @@ async def get_position(
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Position monitoring not yet implemented",
+      "ticket": 123456,
+      "symbol": "XAUUSD",
+      "type": 0,
+      "volume": 0.1,
+      "price_open": 2650.25,
+      "price_current": 2655.80,
+      "profit": 55.50,
+      "swap": -2.50,
+      "commission": -5.00,
+      "sl": 2640.00,
+      "tp": 2670.00,
+      "time": "2025-11-17T08:30:00Z",
+      "magic": 12345,
+      "comment": "manual"
+    }
+    ```
+
+    If position not found:
+    ```json
+    {
+      "error": "Position not found",
       "ticket": 12345
     }
     ```
     """
-    return {
-        "status": "not_implemented",
-        "message": "Position monitoring not yet implemented",
-        "ticket": ticket
-    }
+    position = api_service.get_position_by_ticket(ticket)
+
+    if position is None:
+        return {
+            "error": "Position not found",
+            "ticket": ticket
+        }
+
+    return position
 
 
 @router.post("/{ticket}/close")

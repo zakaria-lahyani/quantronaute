@@ -61,16 +61,34 @@ async def list_symbol_strategies(
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Strategy listing not yet implemented",
+      "symbol": "XAUUSD",
+      "strategies": ["manual", "breakout", "trend_follow"],
+      "total_strategies": 3
+    }
+    ```
+
+    If Orchestrator not available:
+    ```json
+    {
+      "error": "Strategy data not available",
+      "reason": "Orchestrator not connected or symbol not configured",
       "symbol": "XAUUSD"
     }
     ```
     """
+    strategies = api_service.get_available_strategies(symbol)
+
+    if strategies is None:
+        return {
+            "error": "Strategy data not available",
+            "reason": "Orchestrator not connected or symbol not configured",
+            "symbol": symbol.upper()
+        }
+
     return {
-        "status": "not_implemented",
-        "message": "Strategy listing not yet implemented",
-        "symbol": symbol.upper()
+        "symbol": symbol.upper(),
+        "strategies": strategies,
+        "total_strategies": len(strategies)
     }
 
 
@@ -93,23 +111,92 @@ async def get_strategy_config(
     **Response**:
     ```json
     {
-      "status": "not_implemented",
-      "message": "Strategy configuration retrieval not yet implemented",
       "symbol": "XAUUSD",
-      "strategy": "manual"
+      "strategy_name": "breakout",
+      "config": {
+        "name": "breakout",
+        "description": "Breakout strategy...",
+        "risk_params": {...},
+        "conditions": {...}
+      }
     }
     ```
 
-    **Future Implementation**:
-    - Load strategy YAML file
-    - Return full configuration including risk params, conditions, indicators
-    - Parse and validate configuration
+    If strategy not found:
+    ```json
+    {
+      "error": "Strategy not found",
+      "symbol": "XAUUSD",
+      "strategy_name": "breakout"
+    }
+    ```
     """
+    strategy_info = api_service.get_strategy_info(symbol, strategy_name)
+
+    if strategy_info is None:
+        return {
+            "error": "Strategy not found",
+            "symbol": symbol.upper(),
+            "strategy_name": strategy_name
+        }
+
     return {
-        "status": "not_implemented",
-        "message": "Strategy configuration retrieval not yet implemented",
         "symbol": symbol.upper(),
-        "strategy": strategy_name
+        "strategy_name": strategy_name,
+        "config": strategy_info
+    }
+
+
+@router.get("/{symbol}/metrics")
+async def get_strategy_metrics(
+    symbol: str,
+    api_service: APIService = Depends(get_api_service),
+    user: dict = Depends(get_current_user)
+):
+    """
+    Get strategy evaluation metrics for a symbol.
+
+    **Authentication**: Required (JWT Bearer token)
+
+    **Path Parameters**:
+    - `symbol`: Trading symbol (e.g., XAUUSD, EURUSD)
+
+    **Response**:
+    ```json
+    {
+      "symbol": "XAUUSD",
+      "metrics": {
+        "strategies_evaluated": 1250,
+        "entry_signals_generated": 15,
+        "exit_signals_generated": 12,
+        "evaluation_errors": 0,
+        "entry_signals_suppressed": 3,
+        "automation_enabled": true
+      }
+    }
+    ```
+
+    If Orchestrator not available:
+    ```json
+    {
+      "error": "Strategy metrics not available",
+      "reason": "Orchestrator not connected or symbol not configured",
+      "symbol": "XAUUSD"
+    }
+    ```
+    """
+    metrics = api_service.get_strategy_metrics(symbol)
+
+    if metrics is None:
+        return {
+            "error": "Strategy metrics not available",
+            "reason": "Orchestrator not connected or symbol not configured",
+            "symbol": symbol.upper()
+        }
+
+    return {
+        "symbol": symbol.upper(),
+        "metrics": metrics
     }
 
 
