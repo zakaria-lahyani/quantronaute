@@ -184,6 +184,13 @@ class SystemConfig(BaseModel):
             "track_regime_changes": self.services.indicator_calculation.track_regime_changes,
             "min_rows_required": self.services.strategy_evaluation.min_rows_required,
             "execution_mode": self.services.trade_execution.execution_mode,
+            "automation": {
+                "enabled": self.automation.enabled,
+                "state_file": self.automation.state_file,
+                "toggle_file": self.automation.toggle_file,
+                "file_watcher_enabled": self.automation.file_watcher_enabled,
+                "file_watcher_interval": self.automation.file_watcher_interval,
+            },
         }
 
     def get_data_fetching_config(self, symbol: str) -> Dict[str, Any]:

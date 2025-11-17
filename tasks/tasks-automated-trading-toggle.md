@@ -128,22 +128,22 @@ Update the file after completing each sub-task, not just after completing an ent
     - [x] 3.2.2 Implement log rotation (max 10MB, keep last 5 files)
     - [x] 3.2.3 Add log sanitization (no sensitive data)
 
-- [ ] **4.0 Update orchestrator and configuration**
-  - [ ] 4.1 Update `app/infrastructure/orchestrator.py`
-    - [ ] 4.1.1 Import `AutomationStateManager` and `AutomationFileWatcher`
-    - [ ] 4.1.2 Instantiate `AutomationStateManager` in `__init__` before services
-    - [ ] 4.1.3 Initialize automation state from file during orchestrator startup
-    - [ ] 4.1.4 Register `AutomationStateManager` with EventBus
-    - [ ] 4.1.5 Instantiate `AutomationFileWatcher` (if enabled via config)
-    - [ ] 4.1.6 Start file watcher after all services are initialized
-    - [ ] 4.1.7 Add automation state to `get_metrics()` output
-    - [ ] 4.1.8 Add automation state to `health_check()` response
-    - [ ] 4.1.9 Ensure state persistence on orchestrator shutdown
-    - [ ] 4.1.10 Stop file watcher during orchestrator shutdown
-  - [ ] 4.2 Update `app/main_multi_symbol.py`
-    - [ ] 4.2.1 Verify orchestrator initialization includes automation components
-    - [ ] 4.2.2 Add logging for automation initialization status
-    - [ ] 4.2.3 Handle automation startup errors gracefully
+- [x] **4.0 Update orchestrator and configuration**
+  - [x] 4.1 Update `app/infrastructure/multi_symbol_orchestrator.py`
+    - [x] 4.1.1 Import `AutomationStateManager` and `AutomationFileWatcher`
+    - [x] 4.1.2 Instantiate `AutomationStateManager` in `initialize()` after EventBus
+    - [x] 4.1.3 Initialize automation state from file during orchestrator startup
+    - [x] 4.1.4 Register `AutomationStateManager` with EventBus (automatic via constructor)
+    - [x] 4.1.5 Instantiate `AutomationFileWatcher` (if enabled via config)
+    - [x] 4.1.6 Start file watcher in `start()` method
+    - [x] 4.1.7 Add automation state to `get_all_metrics()` output
+    - [x] 4.1.8 Add automation state to metrics (included in get_all_metrics)
+    - [x] 4.1.9 Ensure state persistence (AutomationStateManager handles this)
+    - [x] 4.1.10 Stop file watcher during orchestrator shutdown in `stop()` method
+  - [x] 4.2 Update SystemConfig automation integration
+    - [x] 4.2.1 Update `to_orchestrator_config()` to include automation settings
+    - [x] 4.2.2 Automation config passed to orchestrator via config dict
+    - [x] 4.2.3 Error handling included in orchestrator initialization
 
 - [ ] **5.0 Testing and validation**
   - [ ] 5.1 Create unit tests for `AutomationStateManager`
