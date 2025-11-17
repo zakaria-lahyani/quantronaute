@@ -17,10 +17,10 @@ This implementation is broken into logical phases to allow incremental delivery 
 - Create base API service integrated with EventBus
 - Establish request-response pattern with correlation IDs
 
-### Phase B: Critical Trading Operations
+### Phase B: Critical Trading Operations (Smart Manual Trading)
 - Automation control endpoints (replace file-based toggle)
-- Position management endpoints
-- Order management endpoints
+- Smart position management (one-click open/close with automatic calculations)
+- Smart order placement (system handles sizing, SL/TP, scaling)
 - Basic error handling and validation
 
 ### Phase C: Monitoring & Analytics
@@ -132,11 +132,11 @@ API_PASSWORD_HASH={bcrypt-hash}
 - [ ] 2.3: Implement EventResponseWaiter utility (`app/api/utils/event_waiter.py`)
 - [ ] 2.4: Create correlation ID tracking system (`app/api/utils/correlation.py`)
 - [ ] 2.5: Define API command events (`app/api/events.py`):
-  - `OpenPositionCommand`
-  - `ClosePositionCommand`
-  - `ModifyPositionCommand`
-  - `QueryIndicatorsCommand`
-  - `QueryStrategyConditionsCommand`
+  - `PlaceSmartOrderCommandEvent` (symbol, direction, strategy_name, risk_override)
+  - `ClosePositionCommandEvent` (ticket, volume)
+  - `ModifyPositionCommandEvent` (ticket, sl, tp)
+  - `QueryIndicatorsCommandEvent` (symbol, timeframe)
+  - `QueryStrategyConditionsCommandEvent` (symbol, strategy_name)
   - Response events for each
 - [ ] 2.6: Implement async request-response pattern (publish command → wait for response event)
 - [ ] 2.7: Add timeout handling (5 seconds → 503 Service Unavailable)
@@ -189,58 +189,96 @@ GET  /api/v1/automation/status
 
 ---
 
-### 4.0: Position Management Endpoints
+### 4.0: Smart Position Management Endpoints
 
-**Goal**: Enable manual position opening, closing, and modification
+**Goal**: Enable one-click position management with automatic risk calculations
+
+**Philosophy**: User provides ONLY symbol + direction. System handles everything else.
 
 **Tasks**:
 - [ ] 4.1: Create positions router (`app/api/routers/positions.py`)
 - [ ] 4.2: Implement `GET /positions` (list all positions)
 - [ ] 4.3: Implement `GET /positions/{symbol}` (list by symbol)
-- [ ] 4.4: Implement `GET /positions/{symbol}/{ticket}` (get specific position)
-- [ ] 4.5: Implement `POST /positions/open` (open manual position)
-  - Integrate with EntryManager for risk validation
-  - Create `OpenPositionCommand` event
-  - TradeExecutionService handles command and publishes `PositionOpenedEvent`
-- [ ] 4.6: Implement `POST /positions/{symbol}/{ticket}/close` (close position)
-  - Support partial closes (volume parameter)
-- [ ] 4.7: Implement `POST /positions/{symbol}/{ticket}/modify` (modify SL/TP)
+- [ ] 4.4: Implement `GET /positions/{ticket}` (get specific position by ticket)
+- [ ] 4.5: Implement `POST /positions/open` (smart position opening)
+  - Request: symbol, direction, strategy_name (optional), risk_override (optional)
+  - System calculates: entry price (market), position size, SL (ATR-based), TP (with scaling), validates risk
+  - Integrate with EntryManager for risk calculation and validation
+  - Create `OpenSmartPositionCommand` event
+  - TradeExecutionService handles command and publishes `OrderPlacedEvent`
+- [ ] 4.6: Implement `POST /positions/{ticket}/close` (smart close)
+  - Support full or partial closes (volume parameter optional)
+  - System handles close at market price
+- [ ] 4.7: Implement `POST /positions/{ticket}/modify` (modify SL/TP)
 - [ ] 4.8: Implement `POST /positions/close-all` (close all positions, optional symbol filter)
 - [ ] 4.9: Create comprehensive request/response models
 - [ ] 4.10: Add risk validation error responses (400 Bad Request)
-- [ ] 4.11: Update TradeExecutionService to handle API command events
+- [ ] 4.11: Update TradeExecutionService to handle smart position command events
 - [ ] 4.12: Integration tests for position operations
 
 **Success Criteria**:
-- Manual positions can be opened via API with automatic risk calculation
-- Position sizing, SL, TP calculated by EntryManager if not provided
-- Risk limits are enforced (daily loss limit, position sizing rules)
+- Trader specifies ONLY symbol + direction, system handles rest
+- Position sizing calculated by EntryManager based on risk config
+- SL calculated using ATR or configured method
+- TP calculated with proper scaling if configured
+- Risk limits enforced (daily loss, max positions, position sizing rules)
 - Positions can be closed and modified
-- Clear error messages for validation failures
+- Clear error messages for validation failures (e.g., "Daily loss limit would be exceeded: $X/$Y")
+
+**Example Smart Request**:
+```json
+POST /positions/open
+{
+  "symbol": "XAUUSD",
+  "direction": "long"
+}
+
+Response:
+{
+  "success": true,
+  "orders": [
+    {"ticket": 12345, "volume": 0.3, "entry": 2650.25, "sl": 2640.0, "tp": 2670.0},
+    {"ticket": 12346, "volume": 0.2, "entry": 2650.25, "sl": 2640.0, "tp": 2680.0}
+  ],
+  "calculations": {
+    "risk_amount": 100.0,
+    "risk_percent": 1.0,
+    "total_volume": 0.5,
+    "sl_distance": 10.25
+  }
+}
+```
 
 ---
 
-### 5.0: Order Management Endpoints
+### 5.0: Smart Order Management Endpoints
 
-**Goal**: Enable pending order creation, modification, and cancellation
+**Goal**: Enable smart pending order creation with automatic calculations
+
+**Philosophy**: System calculates order parameters based on risk config, not manual specification.
 
 **Tasks**:
 - [ ] 5.1: Create orders router (`app/api/routers/orders.py`)
 - [ ] 5.2: Implement `GET /orders` (list all pending orders)
 - [ ] 5.3: Implement `GET /orders/{symbol}` (list by symbol)
-- [ ] 5.4: Implement `POST /orders/create` (create pending order)
-  - Support BUY_LIMIT, SELL_LIMIT, BUY_STOP, SELL_STOP
-- [ ] 5.5: Implement `POST /orders/{ticket}/modify` (modify order price, SL, TP)
-- [ ] 5.6: Implement `POST /orders/{ticket}/cancel` (cancel order)
-- [ ] 5.7: Implement `POST /orders/cancel-all` (cancel all, optional symbol filter)
-- [ ] 5.8: Integrate with existing OrdersClient (MT5)
-- [ ] 5.9: Create request/response models
-- [ ] 5.10: Integration tests for order operations
+- [ ] 5.4: Implement `POST /orders` (smart order placement)
+  - Request: symbol, direction, strategy_name (optional), risk_override (optional)
+  - System calculates: position size, SL, TP, scaling
+  - Entry price is MARKET (immediate execution)
+  - System uses EntryManager for all calculations
+- [ ] 5.5: Implement `DELETE /orders/{ticket}` (cancel order)
+- [ ] 5.6: Implement `DELETE /orders/all` (cancel all, optional symbol filter)
+- [ ] 5.7: Integrate with TradeExecutionService via PlaceSmartOrderCommandEvent
+- [ ] 5.8: Create request/response models
+- [ ] 5.9: Integration tests for order operations
 
 **Success Criteria**:
-- Pending orders can be created via API
-- Orders can be modified and cancelled
+- Orders can be placed with one click (symbol + direction only)
+- System handles all calculations (sizing, SL, TP, scaling)
+- Orders can be cancelled
 - Validation errors return clear messages
+
+**Note**: No support for limit/stop orders - all orders execute at market price. This is intentional for simplicity.
 
 ---
 
@@ -631,16 +669,21 @@ slowapi>=0.1.9
 ## Notes
 
 1. **Incremental Delivery**: Each phase delivers working functionality
-2. **Strategy Monitoring** (Task 7.0) is a **new feature** not in existing system - provides real-time condition evaluation
-3. **EventBus Integration**: All operations go through events (maintains architecture)
-4. **Risk First**: Manual trades MUST go through EntryManager (no bypass)
-5. **Caching**: 5-second cache for indicators and account info (reduce load)
-6. **Security**: JWT with 60-minute expiration, rate limiting, CORS
-7. **Documentation**: Auto-generated (Swagger/ReDoc) + markdown guides
-8. **Testing**: Comprehensive unit, integration, and performance tests
+2. **Smart Manual Trading Philosophy**: API is a control panel - all intelligence stays in trading system
+   - User provides: Symbol + Direction (+ optional risk override)
+   - System handles: Entry price, sizing, SL, TP, scaling, validation
+   - No manual specification of prices or volumes
+3. **Strategy Monitoring** (Task 7.0) is a **new feature** not in existing system - provides real-time condition evaluation
+4. **EventBus Integration**: All operations go through events (maintains architecture)
+5. **Risk First**: Manual trades MUST go through EntryManager (no bypass)
+6. **Caching**: 5-second cache for indicators and account info (reduce load)
+7. **Security**: JWT with 60-minute expiration, rate limiting, CORS
+8. **Documentation**: Auto-generated (Swagger/ReDoc) + markdown guides
+9. **Testing**: Comprehensive unit, integration, and performance tests
 
 ---
 
-**Document Version**: 1.0
+**Document Version**: 1.1
 **Created**: 2025-11-17
+**Updated**: 2025-11-17 - Refactored to smart manual trading philosophy
 **Status**: Ready for implementation
