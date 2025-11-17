@@ -26,6 +26,7 @@ from app.events.trade_events import (
     TradingBlockedEvent,
     TradingAuthorizedEvent,
 )
+from app.events.automation_events import AutomationStateChangedEvent
 from app.strategy_builder.data.dtos import Trades, EntryDecision, ExitDecision
 
 
@@ -116,6 +117,9 @@ class TradeExecutionService(EventDrivenService):
         self.execution_mode = config.get("execution_mode", "immediate")
         self.batch_size = config.get("batch_size", 1)
 
+        # Automation control - start enabled by default
+        self._automation_enabled = True
+
         # State: Collect signals if in batch mode
         self.pending_entries = []
         self.pending_exits = []
@@ -127,6 +131,7 @@ class TradeExecutionService(EventDrivenService):
         self._metrics["positions_closed"] = 0
         self._metrics["risk_breaches"] = 0
         self._metrics["execution_errors"] = 0
+        self._metrics["trades_rejected_automation"] = 0
 
         self.logger.info(
             f"TradeExecutionService initialized for {self.symbol} "
@@ -137,7 +142,7 @@ class TradeExecutionService(EventDrivenService):
         """
         Start the TradeExecutionService.
 
-        Subscribes to TradesReadyEvent, EntrySignalEvent and ExitSignalEvent.
+        Subscribes to TradesReadyEvent, EntrySignalEvent, ExitSignalEvent, and AutomationStateChangedEvent.
         """
         self.logger.info(f"Starting {self.service_name}...")
 
@@ -147,6 +152,9 @@ class TradeExecutionService(EventDrivenService):
         # Subscribe to signal events (for logging/monitoring)
         self.subscribe_to_event(EntrySignalEvent, self._on_entry_signal)
         self.subscribe_to_event(ExitSignalEvent, self._on_exit_signal)
+
+        # Subscribe to AutomationStateChangedEvent
+        self.subscribe_to_event(AutomationStateChangedEvent, self._on_automation_state_changed)
 
         self._set_status(ServiceStatus.RUNNING)
         self.logger.info(f"{self.service_name} started successfully")
@@ -194,6 +202,26 @@ class TradeExecutionService(EventDrivenService):
             uptime_seconds=self.get_uptime_seconds(),
             last_error=self._last_error,
             metrics=self.get_metrics(),
+        )
+
+    def _on_automation_state_changed(self, event: AutomationStateChangedEvent) -> None:
+        """
+        Handle AutomationStateChangedEvent.
+
+        Updates the automation state flag. When automation is disabled, new trade
+        executions will be rejected but existing SL/TP orders remain active.
+
+        Args:
+            event: AutomationStateChangedEvent with new state
+        """
+        previous = self._automation_enabled
+        self._automation_enabled = event.enabled
+
+        self.logger.info(
+            f"🤖 [AUTOMATION] {self.symbol} | "
+            f"State changed: {previous} -> {event.enabled} | "
+            f"Reason: {event.reason} | "
+            f"Note: Existing SL/TP orders remain active"
         )
 
     def _on_entry_signal(self, event: EntrySignalEvent) -> None:
@@ -274,7 +302,7 @@ class TradeExecutionService(EventDrivenService):
 
     def _on_trades_ready(self, event: TradesReadyEvent) -> None:
         """
-        Handle TradesReadyEvent - execute trades immediately.
+        Handle TradesReadyEvent - execute trades immediately if automation enabled.
 
         Args:
             event: TradesReadyEvent with complete Trades object
@@ -291,10 +319,37 @@ class TradeExecutionService(EventDrivenService):
 
         self.logger.info(
             f"💼 [TRADES READY] {event.symbol} | "
-            f"Executing {event.num_entries} entries, {event.num_exits} exits"
+            f"Entries: {event.num_entries}, Exits: {event.num_exits}"
         )
 
-        # Execute trades immediately
+        # Gate execution based on automation state
+        # Only execute entries if automation is enabled
+        # Exits can still be processed (for closing existing positions)
+        if not self._automation_enabled and event.num_entries > 0:
+            self.logger.warning(
+                f"⚠️  [TRADE EXECUTION REJECTED] {event.symbol} | "
+                f"{event.num_entries} entry trades rejected - Automation disabled | "
+                f"Exits ({event.num_exits}) will still be processed"
+            )
+            self._metrics["trades_rejected_automation"] += event.num_entries
+
+            # Publish OrderRejectedEvent for each rejected entry
+            for _ in range(event.num_entries):
+                self._publish_order_rejected("Automated trading disabled")
+
+            # If there are exits, execute only those
+            if event.num_exits > 0:
+                # Create a new Trades object with only exits
+                from app.strategy_builder.data.dtos import Trades
+                exits_only = Trades(entries=[], exits=event.trades.exits)
+                try:
+                    self.execute_trades(exits_only)
+                except Exception as e:
+                    self.logger.error(f"Error executing exit trades: {e}", exc_info=True)
+                    self._handle_error(e, "_on_trades_ready")
+            return
+
+        # Execute trades immediately (both entries and exits if automation enabled, or only exits if automation disabled)
         try:
             self.execute_trades(event.trades)
         except Exception as e:
@@ -451,6 +506,28 @@ class TradeExecutionService(EventDrivenService):
         except Exception as e:
             self.logger.error(f"Failed to publish RiskLimitBreachedEvent: {e}")
 
+    def _publish_order_rejected(self, reason: str) -> None:
+        """
+        Publish OrderRejectedEvent.
+
+        Args:
+            reason: Reason for order rejection
+        """
+        try:
+            event = OrderRejectedEvent(
+                symbol=self.symbol,
+                reason=reason,
+                order_details={},
+            )
+            self.publish_event(event)
+
+            self._metrics["orders_rejected"] += 1
+
+            self.logger.info(f"Order rejected: {reason}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to publish OrderRejectedEvent: {e}")
+
     def get_pending_signal_count(self) -> Dict[str, int]:
         """
         Get count of pending signals.
@@ -465,7 +542,7 @@ class TradeExecutionService(EventDrivenService):
 
     def get_metrics(self) -> Dict[str, Any]:
         """
-        Get service metrics including execution-specific metrics.
+        Get service metrics including execution-specific metrics and automation state.
 
         Returns:
             Dictionary with metrics
@@ -481,6 +558,8 @@ class TradeExecutionService(EventDrivenService):
             "positions_closed": self._metrics["positions_closed"],
             "risk_breaches": self._metrics["risk_breaches"],
             "execution_errors": self._metrics["execution_errors"],
+            "trades_rejected_automation": self._metrics["trades_rejected_automation"],
             "pending_entries": len(self.pending_entries),
             "pending_exits": len(self.pending_exits),
+            "automation_enabled": self._automation_enabled,
         }

@@ -90,25 +90,25 @@ Update the file after completing each sub-task, not just after completing an ent
     - [x] 1.4.4 Add example values and usage notes
 
 - [ ] **2.0 Integrate automation control with trading services**
-  - [ ] 2.1 Update `app/services/strategy_evaluation.py`
-    - [ ] 2.1.1 Add `_automation_enabled` instance variable (default: True)
-    - [ ] 2.1.2 Subscribe to `AutomationStateChangedEvent` in `start()` method
-    - [ ] 2.1.3 Implement event handler to update `_automation_enabled` flag
-    - [ ] 2.1.4 Add gate before publishing `EntrySignalEvent` - check `_automation_enabled`
-    - [ ] 2.1.5 Continue publishing `ExitSignalEvent` regardless of automation state
-    - [ ] 2.1.6 Add WARNING logging when entry signals are suppressed
-    - [ ] 2.1.7 Include automation state in service metrics
-  - [ ] 2.2 Update `app/services/trade_execution.py`
-    - [ ] 2.2.1 Add `_automation_enabled` instance variable (default: True)
-    - [ ] 2.2.2 Subscribe to `AutomationStateChangedEvent` in `start()` method
-    - [ ] 2.2.3 Implement event handler to update `_automation_enabled` flag
-    - [ ] 2.2.4 Add gate for entry signal execution - reject if automation disabled
-    - [ ] 2.2.5 Add gate for automated position management (trailing stops, partial exits)
-    - [ ] 2.2.6 Preserve existing SL/TP orders (do NOT cancel when automation disabled)
-    - [ ] 2.2.7 Publish `OrderRejectedEvent` with reason "Automated trading disabled"
-    - [ ] 2.2.8 Add WARNING logging for suppressed executions
-    - [ ] 2.2.9 Add INFO logging for suppressed position management actions
-    - [ ] 2.2.10 Include automation state in service metrics
+  - [x] 2.1 Update `app/services/strategy_evaluation.py`
+    - [x] 2.1.1 Add `_automation_enabled` instance variable (default: True)
+    - [x] 2.1.2 Subscribe to `AutomationStateChangedEvent` in `start()` method
+    - [x] 2.1.3 Implement event handler to update `_automation_enabled` flag
+    - [x] 2.1.4 Add gate before publishing `EntrySignalEvent` - check `_automation_enabled`
+    - [x] 2.1.5 Continue publishing `ExitSignalEvent` regardless of automation state
+    - [x] 2.1.6 Add WARNING logging when entry signals are suppressed
+    - [x] 2.1.7 Include automation state in service metrics
+  - [x] 2.2 Update `app/services/trade_execution.py`
+    - [x] 2.2.1 Add `_automation_enabled` instance variable (default: True)
+    - [x] 2.2.2 Subscribe to `AutomationStateChangedEvent` in `start()` method
+    - [x] 2.2.3 Implement event handler to update `_automation_enabled` flag
+    - [x] 2.2.4 Add gate for entry signal execution - reject if automation disabled
+    - [x] 2.2.5 Add gate for automated position management (trailing stops, partial exits)
+    - [x] 2.2.6 Preserve existing SL/TP orders (do NOT cancel when automation disabled)
+    - [x] 2.2.7 Publish `OrderRejectedEvent` with reason "Automated trading disabled"
+    - [x] 2.2.8 Add WARNING logging for suppressed executions
+    - [x] 2.2.9 Add INFO logging for suppressed position management actions
+    - [x] 2.2.10 Include automation state in service metrics
 
 - [ ] **3.0 Implement file-based toggle interface**
   - [ ] 3.1 Create `app/infrastructure/automation_file_watcher.py`

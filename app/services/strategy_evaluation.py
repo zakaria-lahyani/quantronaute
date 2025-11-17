@@ -23,6 +23,7 @@ from app.events.strategy_events import (
     TradesReadyEvent,
     StrategyEvaluationErrorEvent,
 )
+from app.events.automation_events import AutomationStateChangedEvent
 
 
 class StrategyEvaluationService(EventDrivenService):
@@ -121,11 +122,15 @@ class StrategyEvaluationService(EventDrivenService):
         self.symbol = config["symbol"]
         self.min_rows_required = config.get("min_rows_required", 3)
 
+        # Automation control - start enabled by default
+        self._automation_enabled = True
+
         # Metrics
         self._metrics["strategies_evaluated"] = 0
         self._metrics["entry_signals_generated"] = 0
         self._metrics["exit_signals_generated"] = 0
         self._metrics["evaluation_errors"] = 0
+        self._metrics["entry_signals_suppressed"] = 0
 
         self.logger.info(
             f"StrategyEvaluationService initialized for {self.symbol} "
@@ -136,12 +141,15 @@ class StrategyEvaluationService(EventDrivenService):
         """
         Start the StrategyEvaluationService.
 
-        Subscribes to IndicatorsCalculatedEvent.
+        Subscribes to IndicatorsCalculatedEvent and AutomationStateChangedEvent.
         """
         self.logger.info(f"Starting {self.service_name}...")
 
         # Subscribe to IndicatorsCalculatedEvent
         self.subscribe_to_event(IndicatorsCalculatedEvent, self._on_indicators_calculated)
+
+        # Subscribe to AutomationStateChangedEvent
+        self.subscribe_to_event(AutomationStateChangedEvent, self._on_automation_state_changed)
 
         self._set_status(ServiceStatus.RUNNING)
         self.logger.info(f"{self.service_name} started successfully")
@@ -177,6 +185,25 @@ class StrategyEvaluationService(EventDrivenService):
             uptime_seconds=self.get_uptime_seconds(),
             last_error=self._last_error,
             metrics=self.get_metrics(),
+        )
+
+    def _on_automation_state_changed(self, event: AutomationStateChangedEvent) -> None:
+        """
+        Handle AutomationStateChangedEvent.
+
+        Updates the automation state flag. When automation is disabled, entry signals
+        will be suppressed but exit signals will continue to be published.
+
+        Args:
+            event: AutomationStateChangedEvent with new state
+        """
+        previous = self._automation_enabled
+        self._automation_enabled = event.enabled
+
+        self.logger.info(
+            f"🤖 [AUTOMATION] {self.symbol} | "
+            f"State changed: {previous} -> {event.enabled} | "
+            f"Reason: {event.reason}"
         )
 
     def _on_indicators_calculated(self, event: IndicatorsCalculatedEvent) -> None:
@@ -290,8 +317,17 @@ class StrategyEvaluationService(EventDrivenService):
             self._publish_trades_ready(trades)
 
         # Step 4: Publish individual entry signals (for monitoring/logging)
+        # Gate entry signals based on automation state
         for entry_decision in trades.entries:
-            self._publish_entry_signal(entry_decision)
+            if self._automation_enabled:
+                self._publish_entry_signal(entry_decision)
+            else:
+                # Log suppressed signal
+                self.logger.warning(
+                    f"⚠️  [ENTRY SUPPRESSED] {entry_decision.strategy_name} | "
+                    f"{entry_decision.direction} {entry_decision.symbol} - Automation disabled"
+                )
+                self._metrics["entry_signals_suppressed"] += 1
 
         # Step 5: Publish individual exit signals (for monitoring/logging)
         for exit_decision in trades.exits:
@@ -427,7 +463,7 @@ class StrategyEvaluationService(EventDrivenService):
 
     def get_metrics(self) -> Dict[str, Any]:
         """
-        Get service metrics including strategy-specific metrics.
+        Get service metrics including strategy-specific metrics and automation state.
 
         Returns:
             Dictionary with metrics
@@ -441,4 +477,6 @@ class StrategyEvaluationService(EventDrivenService):
             "entry_signals_generated": self._metrics["entry_signals_generated"],
             "exit_signals_generated": self._metrics["exit_signals_generated"],
             "evaluation_errors": self._metrics["evaluation_errors"],
+            "entry_signals_suppressed": self._metrics["entry_signals_suppressed"],
+            "automation_enabled": self._automation_enabled,
         }
