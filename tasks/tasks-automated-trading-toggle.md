@@ -146,24 +146,24 @@ Update the file after completing each sub-task, not just after completing an ent
     - [x] 4.2.3 Error handling included in orchestrator initialization
 
 - [ ] **5.0 Testing and validation**
-  - [ ] 5.1 Create unit tests for `AutomationStateManager`
-    - [ ] 5.1.1 Create `tests/infrastructure/test_automation_state_manager.py`
-    - [ ] 5.1.2 Test state loading from file (new file, existing file, corrupted file)
-    - [ ] 5.1.3 Test state saving (atomic write, backup creation, rotation)
-    - [ ] 5.1.4 Test event handling (ENABLE, DISABLE, QUERY actions)
-    - [ ] 5.1.5 Test state change event publishing
-    - [ ] 5.1.6 Test thread safety (concurrent state updates)
-    - [ ] 5.1.7 Test error handling (file I/O errors, invalid JSON)
-    - [ ] 5.1.8 Test default state behavior (no file + no env var)
-  - [ ] 5.2 Create unit tests for `AutomationFileWatcher`
-    - [ ] 5.2.1 Create `tests/infrastructure/test_automation_file_watcher.py`
-    - [ ] 5.2.2 Test file parsing (ENABLE, DISABLE, QUERY commands)
-    - [ ] 5.2.3 Test case-insensitive parsing and whitespace handling
-    - [ ] 5.2.4 Test event publishing after file change
-    - [ ] 5.2.5 Test log file creation and appending
-    - [ ] 5.2.6 Test polling interval behavior
-    - [ ] 5.2.7 Test error handling (missing file, read errors, invalid commands)
-    - [ ] 5.2.8 Test start/stop lifecycle
+  - [x] 5.1 Create unit tests for `AutomationStateManager`
+    - [x] 5.1.1 Create `tests/infrastructure/test_automation_state_manager.py`
+    - [x] 5.1.2 Test state loading from file (new file, existing file, corrupted file)
+    - [x] 5.1.3 Test state saving (atomic write, backup creation, rotation)
+    - [x] 5.1.4 Test event handling (ENABLE, DISABLE, QUERY actions)
+    - [x] 5.1.5 Test state change event publishing
+    - [x] 5.1.6 Test thread safety (concurrent state updates)
+    - [x] 5.1.7 Test error handling (file I/O errors, invalid JSON)
+    - [x] 5.1.8 Test default state behavior (no file + no env var)
+  - [x] 5.2 Create unit tests for `AutomationFileWatcher`
+    - [x] 5.2.1 Create `tests/infrastructure/test_automation_file_watcher.py`
+    - [x] 5.2.2 Test file parsing (ENABLE, DISABLE, QUERY commands)
+    - [x] 5.2.3 Test case-insensitive parsing and whitespace handling
+    - [x] 5.2.4 Test event publishing after file change
+    - [x] 5.2.5 Test log file creation and appending
+    - [x] 5.2.6 Test polling interval behavior
+    - [x] 5.2.7 Test error handling (missing file, read errors, invalid commands)
+    - [x] 5.2.8 Test start/stop lifecycle
   - [ ] 5.3 Create integration tests for service automation gating
     - [ ] 5.3.1 Create `tests/services/test_strategy_evaluation_automation.py`
     - [ ] 5.3.2 Test entry signal suppression when automation disabled
