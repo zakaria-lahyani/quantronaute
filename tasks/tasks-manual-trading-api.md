@@ -29,10 +29,12 @@ This implementation is broken into logical phases to allow incremental delivery 
 - Account information endpoints
 - System health and metrics endpoints
 
-### Phase D: Risk Management
-- Risk configuration endpoints
-- Risk status endpoints
-- Configuration persistence
+### Phase D: Configuration Management (NEW - Full Config API)
+- Strategy configuration endpoints (view/edit YAML files)
+- Broker configuration endpoints (view/edit .env.broker)
+- Configuration validation and backup system
+- Config reload without restart
+- Template management
 
 ### Phase E: Polish & Production Readiness
 - Rate limiting and security hardening
@@ -341,29 +343,135 @@ Response:
 
 ---
 
-### 8.0: Risk Configuration Endpoints
+### 8.0: Configuration Management Endpoints (NEW - Comprehensive Config API)
 
-**Goal**: View and update risk parameters at runtime
+**Goal**: View and modify all trading configurations via API
+
+**Philosophy**: The API exposes the configuration layer, allowing runtime modification
+of strategy configs (.yaml) and broker settings (.env.broker).
+
+**Configuration Hierarchy**:
+1. **Strategy Configs** (`configs/{broker}/strategies/{symbol}/{strategy}.yaml`)
+   - Risk parameters (position_sizing, SL, TP)
+   - Optional scaling overrides
+   - Strategy-specific settings
+
+2. **Broker Configs** (`configs/{broker}/.env.broker`)
+   - Symbol-specific scaling (XAUUSD_POSITION_SPLIT, SCALING_TYPE, etc.)
+   - Account-level risk limits (DAILY_LOSS_LIMIT)
+   - Trading parameters (PIP_VALUE, ENTRY_SPACING, etc.)
 
 **Tasks**:
-- [ ] 8.1: Create risk router (`app/api/routers/risk.py`)
-- [ ] 8.2: Implement `GET /risk/config` (all symbols and strategies)
-- [ ] 8.3: Implement `GET /risk/config/{symbol}` (specific symbol)
-- [ ] 8.4: Implement `GET /risk/config/{symbol}/{strategy}` (specific strategy)
-- [ ] 8.5: Implement `POST /risk/config/{symbol}/{strategy}/update` (update risk params)
-- [ ] 8.6: Implement `GET /risk/limits` (account-level risk limits)
-- [ ] 8.7: Implement `GET /risk/status` (current risk status and budget)
-- [ ] 8.8: Create `RiskConfigUpdatedEvent`
-- [ ] 8.9: Implement YAML file persistence for config updates
-- [ ] 8.10: Add validation (TP > SL, valid types, etc.)
-- [ ] 8.11: Create backup before overwriting YAML files
-- [ ] 8.12: Integration tests for risk config operations
+- [ ] 8.1: Create config router (`app/api/routers/config.py`)
+
+**8.1: Strategy Configuration Endpoints**
+- [ ] 8.2: Implement `GET /config/strategies` (list all strategies across all symbols)
+- [ ] 8.3: Implement `GET /config/strategies/{symbol}` (list strategies for a symbol)
+- [ ] 8.4: Implement `GET /config/strategies/{symbol}/{strategy}` (get full strategy config)
+- [ ] 8.5: Implement `GET /config/strategies/{symbol}/{strategy}/risk` (get risk section only)
+- [ ] 8.6: Implement `PUT /config/strategies/{symbol}/{strategy}/risk` (update risk section)
+  - Request body: Complete risk config object
+  - Validates: position_sizing, sl, tp, optional scaling
+  - Creates backup before modifying
+  - Saves to YAML file
+- [ ] 8.7: Implement `PATCH /config/strategies/{symbol}/{strategy}/risk` (partial risk update)
+  - Update only specified fields (e.g., just position_sizing.value)
+- [ ] 8.8: Implement `POST /config/strategies/{symbol}` (create new strategy config)
+  - Use template from broker-template/strategies/manual-template.yaml
+  - Requires: name, risk config
+
+**8.2: Broker Configuration Endpoints**
+- [ ] 8.9: Implement `GET /config/broker` (all broker settings from .env.broker)
+- [ ] 8.10: Implement `GET /config/broker/symbols` (list configured symbols)
+- [ ] 8.11: Implement `GET /config/broker/symbol/{symbol}` (symbol-specific settings)
+  - Returns: PIP_VALUE, POSITION_SPLIT, SCALING_TYPE, ENTRY_SPACING, RISK_PER_GROUP
+- [ ] 8.12: Implement `PUT /config/broker/symbol/{symbol}` (update symbol settings)
+  - Updates .env.broker file
+  - Validates: POSITION_SPLIT > 0, SCALING_TYPE in [equal, progressive, regressive]
+  - Creates backup before modifying
+- [ ] 8.13: Implement `GET /config/broker/risk-limits` (account-level risk limits)
+  - Returns: DAILY_LOSS_LIMIT, NEWS_RESTRICTION_DURATION, etc.
+- [ ] 8.14: Implement `PUT /config/broker/risk-limits` (update risk limits)
+
+**8.3: Configuration Validation & Persistence**
+- [ ] 8.15: Create configuration validation service
+  - Validate YAML structure
+  - Validate risk parameter types and values
+  - Validate .env.broker key-value pairs
+- [ ] 8.16: Implement backup system
+  - Create timestamped backups before modifications
+  - Keep last 10 backups
+  - Provide rollback endpoint
+- [ ] 8.17: Implement `POST /config/reload` (reload configs without restart)
+  - Publishes ConfigReloadEvent
+  - Services reload their configurations
+- [ ] 8.18: Implement `GET /config/backups` (list available backups)
+- [ ] 8.19: Implement `POST /config/rollback/{backup_id}` (restore from backup)
+
+**8.4: Configuration Templates**
+- [ ] 8.20: Implement `GET /config/templates/strategy` (get strategy template)
+- [ ] 8.21: Implement `GET /config/templates/strategy/examples` (example configs)
+  - Conservative, Moderate, Aggressive examples
 
 **Success Criteria**:
-- Risk parameters can be updated via API
-- Changes persist across application restarts (saved to YAML)
-- Invalid configurations are rejected with clear errors
-- Backup files created before modifications
+- All strategy and broker configs accessible via API
+- Modifications persist to YAML/.env files
+- Backup system prevents config loss
+- Validation prevents invalid configs
+- Changes can be applied without system restart (where possible)
+- Clear error messages for validation failures
+
+**API Examples**:
+
+```bash
+# View manual strategy config for XAUUSD
+GET /config/strategies/XAUUSD/manual
+
+Response:
+{
+  "name": "manual",
+  "risk": {
+    "position_sizing": {"type": "fixed", "value": 0.5},
+    "sl": {"type": "monetary", "value": 500.0},
+    "tp": {
+      "type": "multi_target",
+      "targets": [
+        {"value": 1.0, "percent": 50, "move_stop": true},
+        {"value": 2.0, "percent": 50, "move_stop": false}
+      ]
+    }
+  }
+}
+
+# Update manual strategy risk
+PUT /config/strategies/XAUUSD/manual/risk
+{
+  "position_sizing": {"type": "percentage", "value": 1.0},
+  "sl": {"type": "atr", "value": 1.5},
+  "tp": {"type": "rr", "value": 2.0}
+}
+
+# View XAUUSD broker-level scaling settings
+GET /config/broker/symbol/XAUUSD
+
+Response:
+{
+  "symbol": "XAUUSD",
+  "pip_value": 100,
+  "position_split": 4,
+  "scaling_type": "equal",
+  "entry_spacing": 0.1,
+  "risk_per_group": 1000
+}
+
+# Update XAUUSD scaling
+PUT /config/broker/symbol/XAUUSD
+{
+  "position_split": 2,
+  "scaling_type": "progressive",
+  "entry_spacing": 0.2
+}
+```
 
 ---
 
@@ -659,31 +767,40 @@ slowapi>=0.1.9
 **Phase A**: Core Infrastructure - 2-3 days
 **Phase B**: Trading Operations - 3-4 days
 **Phase C**: Monitoring & Analytics - 3-4 days
-**Phase D**: Risk Management - 2-3 days
+**Phase D**: Configuration Management - 3-4 days (NEW - expanded scope)
 **Phase E**: Polish & Testing - 2-3 days
 
-**Total**: ~12-17 days for full implementation
+**Total**: ~13-18 days for full implementation
 
 ---
 
 ## Notes
 
 1. **Incremental Delivery**: Each phase delivers working functionality
-2. **Smart Manual Trading Philosophy**: API is a control panel - all intelligence stays in trading system
-   - User provides: Symbol + Direction (+ optional risk override)
+2. **Signal-Based Manual Trading**: API publishes EntrySignalEvent/ExitSignalEvent with strategy_name="manual"
+   - Manual signals flow through IDENTICAL pipeline as automated strategies
+   - Uses manual.yaml strategy config for each symbol (defines risk parameters)
+   - Broker .env.broker settings control scaling (POSITION_SPLIT, SCALING_TYPE, etc.)
+   - User provides: Symbol + Direction
    - System handles: Entry price, sizing, SL, TP, scaling, validation
-   - No manual specification of prices or volumes
-3. **Strategy Monitoring** (Task 7.0) is a **new feature** not in existing system - provides real-time condition evaluation
-4. **EventBus Integration**: All operations go through events (maintains architecture)
-5. **Risk First**: Manual trades MUST go through EntryManager (no bypass)
-6. **Caching**: 5-second cache for indicators and account info (reduce load)
-7. **Security**: JWT with 60-minute expiration, rate limiting, CORS
-8. **Documentation**: Auto-generated (Swagger/ReDoc) + markdown guides
-9. **Testing**: Comprehensive unit, integration, and performance tests
+3. **Configuration Management**: Full read/write access to trading configurations via API
+   - Strategy configs (YAML files) - risk parameters, optional scaling overrides
+   - Broker configs (.env.broker) - symbol scaling settings, account risk limits
+   - Backup system with rollback capability
+   - Config reload without system restart (where possible)
+4. **Strategy Monitoring** (Task 7.0) is a **new feature** not in existing system - provides real-time condition evaluation
+5. **EventBus Integration**: All operations go through events (maintains architecture)
+6. **Risk First**: Manual trades MUST go through EntryManager (no bypass)
+7. **Caching**: 5-second cache for indicators and account info (reduce load)
+8. **Security**: JWT with 60-minute expiration, rate limiting, CORS
+9. **Documentation**: Auto-generated (Swagger/ReDoc) + markdown guides
+10. **Testing**: Comprehensive unit, integration, and performance tests
 
 ---
 
-**Document Version**: 1.1
+**Document Version**: 1.2
 **Created**: 2025-11-17
-**Updated**: 2025-11-17 - Refactored to smart manual trading philosophy
+**Updated**: 2025-11-17
+  - v1.1: Refactored to signal-based manual trading
+  - v1.2: Added comprehensive configuration management API (Task 8.0)
 **Status**: Ready for implementation

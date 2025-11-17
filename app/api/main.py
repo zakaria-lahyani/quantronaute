@@ -7,7 +7,7 @@ This module creates and configures the FastAPI application for manual trading op
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routers import automation, positions, orders, indicators, strategies, risk, account, system
+from app.api.routers import automation, positions, orders, indicators, strategies, risk, account, system, config
 
 
 def create_app() -> FastAPI:
@@ -40,7 +40,8 @@ def create_app() -> FastAPI:
     app.include_router(positions.router, prefix="/positions", tags=["Position Monitoring"])
     app.include_router(indicators.router, prefix="/indicators", tags=["Indicator Monitoring"])
     app.include_router(strategies.router, prefix="/strategies", tags=["Strategy Monitoring"])
-    app.include_router(risk.router, prefix="/risk", tags=["Risk Management"])
+    app.include_router(config.router, prefix="/config", tags=["Configuration Management"])  # NEW - Full config API
+    app.include_router(risk.router, prefix="/risk", tags=["Risk Status"])
     app.include_router(account.router, prefix="/account", tags=["Account Info"])
     app.include_router(system.router, prefix="/system", tags=["System Health"])
 
